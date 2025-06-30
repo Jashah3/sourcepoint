@@ -5,28 +5,30 @@ import { Button } from "@/components/ui/button";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import Dashboard from "@/components/Dashboard";
 import Onboarding from "@/components/Onboarding";
+import { VoiceAssistant } from "@/components/VoiceAssistant";
 
 const Index = () => {
   const [isOnboarded, setIsOnboarded] = useState(false);
 
   useEffect(() => {
-    const onboardingStatus = localStorage.getItem('healthApp_onboarded');
+    const onboardingStatus = localStorage.getItem('sourcePoint_onboarded');
     setIsOnboarded(onboardingStatus === 'true');
   }, []);
 
   const handleOnboardingComplete = () => {
-    localStorage.setItem('healthApp_onboarded', 'true');
+    localStorage.setItem('sourcePoint_onboarded', 'true');
     setIsOnboarded(true);
   };
 
   return (
-    <ThemeProvider defaultTheme="light" storageKey="health-app-theme">
-      <div className="min-h-screen bg-background">
+    <ThemeProvider defaultTheme="light" storageKey="sourcepoint-theme">
+      <div className="min-h-screen bg-background transition-colors duration-300">
         {!isOnboarded ? (
           <Onboarding onComplete={handleOnboardingComplete} />
         ) : (
           <Dashboard />
         )}
+        <VoiceAssistant />
         <Toaster />
       </div>
     </ThemeProvider>

@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,6 +8,7 @@ import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, Search, Camera, Mic } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { CameraFoodRecognition } from "./CameraFoodRecognition";
 
 export const CalorieTracker = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -45,8 +45,9 @@ export const CalorieTracker = () => {
     if (selectedFood && quantity) {
       const calories = (selectedFood.calories_per_100g * parseFloat(quantity)) / 100;
       toast({
-        title: "Food Added!",
+        title: "Food Added! 🎉",
         description: `${selectedFood.name} (${quantity}g) - ${calories.toFixed(0)} calories`,
+        className: "animate-fade-in"
       });
       setSelectedFood(null);
       setQuantity('1');
@@ -55,61 +56,61 @@ export const CalorieTracker = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <Card>
+    <div className="space-y-6 animate-fade-in">
+      <Card className="bg-white/70 dark:bg-slate-800/70 backdrop-blur-sm hover:shadow-xl transition-all duration-300">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             🍎 Daily Nutrition Overview
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-green-600">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            <div className="text-center p-4 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-xl border border-green-200 dark:border-green-700">
+              <div className="text-3xl font-bold text-green-600 mb-1">
                 {currentTotals.calories}
               </div>
-              <div className="text-sm text-muted-foreground">
+              <div className="text-sm text-muted-foreground mb-3">
                 / {dailyGoals.calories} cal
               </div>
               <Progress 
                 value={(currentTotals.calories / dailyGoals.calories) * 100} 
-                className="mt-2"
+                className="h-2"
               />
             </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-blue-600">
+            <div className="text-center p-4 bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 rounded-xl border border-blue-200 dark:border-blue-700">
+              <div className="text-3xl font-bold text-blue-600 mb-1">
                 {currentTotals.protein}g
               </div>
-              <div className="text-sm text-muted-foreground">
+              <div className="text-sm text-muted-foreground mb-3">
                 / {dailyGoals.protein}g protein
               </div>
               <Progress 
                 value={(currentTotals.protein / dailyGoals.protein) * 100} 
-                className="mt-2"
+                className="h-2"
               />
             </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-orange-600">
+            <div className="text-center p-4 bg-gradient-to-br from-orange-50 to-red-50 dark:from-orange-900/20 dark:to-red-900/20 rounded-xl border border-orange-200 dark:border-orange-700">
+              <div className="text-3xl font-bold text-orange-600 mb-1">
                 {currentTotals.carbs}g
               </div>
-              <div className="text-sm text-muted-foreground">
+              <div className="text-sm text-muted-foreground mb-3">
                 / {dailyGoals.carbs}g carbs
               </div>
               <Progress 
                 value={(currentTotals.carbs / dailyGoals.carbs) * 100} 
-                className="mt-2"
+                className="h-2"
               />
             </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-purple-600">
+            <div className="text-center p-4 bg-gradient-to-br from-purple-50 to-violet-50 dark:from-purple-900/20 dark:to-violet-900/20 rounded-xl border border-purple-200 dark:border-purple-700">
+              <div className="text-3xl font-bold text-purple-600 mb-1">
                 {currentTotals.fat}g
               </div>
-              <div className="text-sm text-muted-foreground">
+              <div className="text-sm text-muted-foreground mb-3">
                 / {dailyGoals.fat}g fat
               </div>
               <Progress 
                 value={(currentTotals.fat / dailyGoals.fat) * 100} 
-                className="mt-2"
+                className="h-2"
               />
             </div>
           </div>
@@ -117,13 +118,13 @@ export const CalorieTracker = () => {
       </Card>
 
       <Tabs defaultValue="add-food" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="add-food">Add Food</TabsTrigger>
-          <TabsTrigger value="meal-log">Meal Log</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-2 bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm">
+          <TabsTrigger value="add-food" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-emerald-600 data-[state=active]:text-white">Add Food</TabsTrigger>
+          <TabsTrigger value="meal-log" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-cyan-600 data-[state=active]:text-white">Meal Log</TabsTrigger>
         </TabsList>
 
         <TabsContent value="add-food" className="space-y-4">
-          <Card>
+          <Card className="bg-white/70 dark:bg-slate-800/70 backdrop-blur-sm">
             <CardHeader>
               <CardTitle>Add Food to Your Day</CardTitle>
             </CardHeader>
@@ -134,15 +135,14 @@ export const CalorieTracker = () => {
                     placeholder="Search for food..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
+                    className="bg-white/50 dark:bg-slate-700/50"
                   />
                 </div>
-                <Button variant="outline" size="icon">
+                <Button variant="outline" size="icon" className="hover:bg-blue-100 dark:hover:bg-blue-900/20">
                   <Search className="h-4 w-4" />
                 </Button>
-                <Button variant="outline" size="icon">
-                  <Camera className="h-4 w-4" />
-                </Button>
-                <Button variant="outline" size="icon">
+                <CameraFoodRecognition />
+                <Button variant="outline" size="icon" className="hover:bg-purple-100 dark:hover:bg-purple-900/20">
                   <Mic className="h-4 w-4" />
                 </Button>
               </div>
@@ -156,7 +156,7 @@ export const CalorieTracker = () => {
                     <div
                       key={food.id}
                       className={`p-3 border rounded-lg cursor-pointer transition-colors ${
-                        selectedFood?.id === food.id ? 'bg-green-50 border-green-200' : 'hover:bg-gray-50'
+                        selectedFood?.id === food.id ? 'bg-green-50 border-green-200' : 'hover:bg-gray-50 dark:hover:bg-slate-700/20 dark:border-slate-700'
                       }`}
                       onClick={() => setSelectedFood(food)}
                     >
@@ -178,7 +178,7 @@ export const CalorieTracker = () => {
               </div>
 
               {selectedFood && (
-                <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg space-y-3">
+                <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-lg border border-green-200 dark:border-green-700 space-y-3 animate-fade-in">
                   <h4 className="font-medium">Add {selectedFood.name}</h4>
                   <div className="flex gap-2 items-end">
                     <div className="flex-1">
@@ -189,9 +189,13 @@ export const CalorieTracker = () => {
                         value={quantity}
                         onChange={(e) => setQuantity(e.target.value)}
                         placeholder="100"
+                        className="bg-white/50 dark:bg-slate-700/50"
                       />
                     </div>
-                    <Button onClick={handleAddFood} className="bg-green-600 hover:bg-green-700">
+                    <Button 
+                      onClick={handleAddFood} 
+                      className="bg-gradient-to-r from-green-600 to-emerald-700 hover:from-green-700 hover:to-emerald-800 transform hover:scale-105 transition-all duration-200"
+                    >
                       <Plus className="h-4 w-4 mr-2" />
                       Add Food
                     </Button>
@@ -203,14 +207,14 @@ export const CalorieTracker = () => {
         </TabsContent>
 
         <TabsContent value="meal-log" className="space-y-4">
-          <Card>
+          <Card className="bg-white/70 dark:bg-slate-800/70 backdrop-blur-sm">
             <CardHeader>
               <CardTitle>Today's Meals</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 {todaysMeals.map((meal) => (
-                  <div key={meal.id} className="p-4 border rounded-lg">
+                  <div key={meal.id} className="p-4 border rounded-lg bg-gradient-to-r from-white/50 to-gray-50/50 dark:from-slate-700/50 dark:to-slate-600/50 hover:shadow-md transition-all duration-200">
                     <div className="flex justify-between items-start mb-2">
                       <div>
                         <Badge variant="secondary" className="mb-2">
