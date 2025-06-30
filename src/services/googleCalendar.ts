@@ -1,0 +1,208 @@
+
+// Google Calendar integration service
+declare global {
+  interface Window {
+    gapi: any;
+  }
+}
+
+export interface CalendarEvent {
+  id?: string;
+  summary: string;
+  description?: string;
+  start: {
+    dateTime: string;
+    timeZone?: string;
+  };
+  end: {
+    dateTime: string;
+    timeZone?: string;
+  };
+  reminders?: {
+    useDefault: boolean;
+    overrides?: Array<{
+      method: string;
+      minutes: number;
+    }>;
+  };
+}
+
+export class GoogleCalendarService {
+  private static instance: GoogleCalendarService;
+  private isInitialized = false;
+
+  public static getInstance(): GoogleCalendarService {
+    if (!GoogleCalendarService.instance) {
+      GoogleCalendarService.instance = new GoogleCalendarService();
+    }
+    return GoogleCalendarService.instance;
+  }
+
+  async initialize(): Promise<boolean> {
+    try {
+      if (!window.gapi) {
+        await this.loadGoogleAPI();
+      }
+
+      await new Promise<void>((resolve) => {
+        window.gapi.load('client:auth2', resolve);
+      });
+
+      await window.gapi.client.init({
+        apiKey: 'your-google-api-key',
+        clientId: 'your-google-client-id.apps.googleusercontent.com',
+        discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest'],
+        scope: 'https://www.googleapis.com/auth/calendar'
+      });
+
+      this.isInitialized = true;
+      return true;
+    } catch (error) {
+      console.error('Failed to initialize Google Calendar:', error);
+      return false;
+    }
+  }
+
+  async signIn(): Promise<boolean> {
+    try {
+      if (!this.isInitialized) {
+        await this.initialize();
+      }
+
+      const authInstance = window.gapi.auth2.getAuthInstance();
+      const user = await authInstance.signIn();
+      
+      localStorage.setItem('googleCalendar_connected', 'true');
+      return user.isSignedIn();
+    } catch (error) {
+      console.error('Google Calendar sign-in failed:', error);
+      return false;
+    }
+  }
+
+  async createMealReminder(mealName: string, dateTime: Date): Promise<boolean> {
+    try {
+      const event: CalendarEvent = {
+        summary: `🍽️ ${mealName} Time`,
+        description: `Time for your ${mealName.toLowerCase()}! Check your meal plan in SourcePoint.`,
+        start: {
+          dateTime: dateTime.toISOString(),
+          timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+        },
+        end: {
+          dateTime: new Date(dateTime.getTime() + 15 * 60000).toISOString(),
+          timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+        },
+        reminders: {
+          useDefault: false,
+          overrides: [
+            { method: 'notification', minutes: 10 },
+            { method: 'popup', minutes: 5 }
+          ]
+        }
+      };
+
+      const response = await window.gapi.client.calendar.events.insert({
+        calendarId: 'primary',
+        resource: event
+      });
+
+      return response.status === 200;
+    } catch (error) {
+      console.error('Failed to create meal reminder:', error);
+      return false;
+    }
+  }
+
+  async createWaterReminder(): Promise<boolean> {
+    try {
+      const now = new Date();
+      const events = [];
+
+      // Create hourly water reminders from 8 AM to 10 PM
+      for (let hour = 8; hour <= 22; hour += 2) {
+        const reminderTime = new Date(now);
+        reminderTime.setHours(hour, 0, 0, 0);
+
+        if (reminderTime > now) {
+          events.push({
+            summary: '💧 Water Break',
+            description: 'Time to drink water! Stay hydrated for optimal health.',
+            start: {
+              dateTime: reminderTime.toISOString(),
+              timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+            },
+            end: {
+              dateTime: new Date(reminderTime.getTime() + 5 * 60000).toISOString(),
+              timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+            },
+            reminders: {
+              useDefault: false,
+              overrides: [{ method: 'notification', minutes: 0 }]
+            }
+          });
+        }
+      }
+
+      for (const event of events) {
+        await window.gapi.client.calendar.events.insert({
+          calendarId: 'primary',
+          resource: event
+        });
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Failed to create water reminders:', error);
+      return false;
+    }
+  }
+
+  async createWorkoutReminder(workoutType: string, dateTime: Date): Promise<boolean> {
+    try {
+      const event: CalendarEvent = {
+        summary: `💪 ${workoutType} Workout`,
+        description: `Time for your ${workoutType.toLowerCase()} workout! Don't forget to hydrate and fuel properly.`,
+        start: {
+          dateTime: dateTime.toISOString(),
+          timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+        },
+        end: {
+          dateTime: new Date(dateTime.getTime() + 60 * 60000).toISOString(),
+          timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+        },
+        reminders: {
+          useDefault: false,
+          overrides: [
+            { method: 'notification', minutes: 15 },
+            { method: 'popup', minutes: 5 }
+          ]
+        }
+      };
+
+      const response = await window.gapi.client.calendar.events.insert({
+        calendarId: 'primary',
+        resource: event
+      });
+
+      return response.status === 200;
+    } catch (error) {
+      console.error('Failed to create workout reminder:', error);
+      return false;
+    }
+  }
+
+  private async loadGoogleAPI(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = 'https://apis.google.com/js/api.js';
+      script.onload = () => resolve();
+      script.onerror = reject;
+      document.head.appendChild(script);
+    });
+  }
+
+  isConnected(): boolean {
+    return localStorage.getItem('googleCalendar_connected') === 'true';
+  }
+}
