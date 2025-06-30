@@ -3,7 +3,6 @@ import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { CalorieTracker } from "@/components/CalorieTracker";
 import { MealPlanner } from "@/components/MealPlanner";
@@ -13,6 +12,8 @@ import { AICoach } from "@/components/AICoach";
 import { Settings } from "@/components/Settings";
 import { CameraFoodRecognition } from "@/components/CameraFoodRecognition";
 import { EnhancedDashboardCards } from "@/components/EnhancedDashboardCards";
+import { DynamicBackground } from "@/components/DynamicBackground";
+import { HealthBadges } from "@/components/HealthBadges";
 import { useTheme } from "./ThemeProvider";
 import { Activity, Award, Calendar, Heart, Settings as SettingsIcon, User, Moon, Sun, Zap } from "lucide-react";
 
@@ -21,16 +22,21 @@ const Dashboard = () => {
   const { theme, setTheme } = useTheme();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 transition-all duration-500">
-      <div className="container mx-auto p-4 max-w-7xl">
-        <header className="flex justify-between items-center mb-8">
+    <div className="min-h-screen relative">
+      <DynamicBackground />
+      
+      <div className="relative z-10 container mx-auto p-4 max-w-7xl">
+        <header className="flex justify-between items-center mb-8 bg-white/20 dark:bg-gray-800/20 backdrop-blur-md rounded-2xl p-4 shadow-lg border border-white/30 dark:border-gray-700/30">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 bg-gradient-to-r from-gray-600 to-gray-800 rounded-xl flex items-center justify-center shadow-lg">
-              <Zap className="h-6 w-6 text-white" />
+            <div className="h-12 w-12 bg-gradient-to-r from-gray-600 to-gray-800 dark:from-gray-400 dark:to-gray-600 rounded-2xl flex items-center justify-center shadow-xl animate-bounce-in">
+              <Zap className="h-7 w-7 text-white animate-pulse" />
             </div>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-700 to-gray-900 bg-clip-text text-transparent">
-              SourcePoint
-            </h1>
+            <div>
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-700 via-gray-800 to-gray-900 dark:from-gray-200 dark:via-gray-300 dark:to-gray-100 bg-clip-text text-transparent">
+                SourcePoint
+              </h1>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Your Health & Wellness Companion</p>
+            </div>
           </div>
           <div className="flex items-center gap-3">
             <CameraFoodRecognition />
@@ -38,21 +44,21 @@ const Dashboard = () => {
               variant="ghost"
               size="icon"
               onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-              className="hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-300"
+              className="hover:bg-white/20 dark:hover:bg-gray-800/20 backdrop-blur-sm transition-all duration-300 rounded-xl"
             >
               {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
             </Button>
-            <Badge variant="secondary" className="bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200 animate-pulse">
+            <Badge variant="secondary" className="bg-gradient-to-r from-orange-500 to-red-500 text-white animate-pulse shadow-lg">
               Day 7 Streak 🔥
             </Badge>
-            <Button variant="ghost" size="icon" className="hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-300">
+            <Button variant="ghost" size="icon" className="hover:bg-white/20 dark:hover:bg-gray-800/20 backdrop-blur-sm transition-all duration-300 rounded-xl">
               <User className="h-5 w-5" />
             </Button>
             <Button 
               variant="ghost" 
               size="icon" 
               onClick={() => setActiveTab("settings")}
-              className="hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-300"
+              className="hover:bg-white/20 dark:hover:bg-gray-800/20 backdrop-blur-sm transition-all duration-300 rounded-xl"
             >
               <SettingsIcon className="h-5 w-5" />
             </Button>
@@ -60,35 +66,36 @@ const Dashboard = () => {
         </header>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-7 mb-8 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-gray-200 dark:border-gray-700 shadow-lg">
-            <TabsTrigger value="dashboard" className="flex items-center gap-2 data-[state=active]:bg-gray-600 data-[state=active]:text-white transition-all duration-300">
+          <TabsList className="grid w-full grid-cols-7 mb-8 bg-white/30 dark:bg-gray-800/30 backdrop-blur-md border border-white/40 dark:border-gray-700/40 shadow-2xl rounded-2xl p-1">
+            <TabsTrigger value="dashboard" className="flex items-center gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-gray-600 data-[state=active]:to-gray-800 data-[state=active]:text-white transition-all duration-300 rounded-xl">
               <Activity className="h-4 w-4" />
               Dashboard
             </TabsTrigger>
-            <TabsTrigger value="calories" className="flex items-center gap-2 data-[state=active]:bg-gray-600 data-[state=active]:text-white transition-all duration-300">
+            <TabsTrigger value="calories" className="flex items-center gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-gray-600 data-[state=active]:to-gray-800 data-[state=active]:text-white transition-all duration-300 rounded-xl">
               🍎 Calories
             </TabsTrigger>
-            <TabsTrigger value="meals" className="flex items-center gap-2 data-[state=active]:bg-gray-600 data-[state=active]:text-white transition-all duration-300">
+            <TabsTrigger value="meals" className="flex items-center gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-gray-600 data-[state=active]:to-gray-800 data-[state=active]:text-white transition-all duration-300 rounded-xl">
               <Calendar className="h-4 w-4" />
               Meals
             </TabsTrigger>
-            <TabsTrigger value="workouts" className="flex items-center gap-2 data-[state=active]:bg-gray-600 data-[state=active]:text-white transition-all duration-300">
+            <TabsTrigger value="workouts" className="flex items-center gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-gray-600 data-[state=active]:to-gray-800 data-[state=active]:text-white transition-all duration-300 rounded-xl">
               <Award className="h-4 w-4" />
               Workouts
             </TabsTrigger>
-            <TabsTrigger value="supplements" className="flex items-center gap-2 data-[state=active]:bg-gray-600 data-[state=active]:text-white transition-all duration-300">
+            <TabsTrigger value="supplements" className="flex items-center gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-gray-600 data-[state=active]:to-gray-800 data-[state=active]:text-white transition-all duration-300 rounded-xl">
               💊 Supplements
             </TabsTrigger>
-            <TabsTrigger value="coach" className="flex items-center gap-2 data-[state=active]:bg-gray-600 data-[state=active]:text-white transition-all duration-300">
+            <TabsTrigger value="coach" className="flex items-center gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-gray-600 data-[state=active]:to-gray-800 data-[state=active]:text-white transition-all duration-300 rounded-xl">
               🤖 AI Coach
             </TabsTrigger>
-            <TabsTrigger value="settings" className="flex items-center gap-2 data-[state=active]:bg-gray-600 data-[state=active]:text-white transition-all duration-300">
+            <TabsTrigger value="settings" className="flex items-center gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-gray-600 data-[state=active]:to-gray-800 data-[state=active]:text-white transition-all duration-300 rounded-xl">
               <SettingsIcon className="h-4 w-4" />
               Settings
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="dashboard" className="space-y-8 animate-fade-in">
+            <HealthBadges />
             <EnhancedDashboardCards />
           </TabsContent>
 
