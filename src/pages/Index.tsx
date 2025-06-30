@@ -1,13 +1,35 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+
+import { useState, useEffect } from 'react';
+import { Toaster } from "@/components/ui/toaster";
+import { Button } from "@/components/ui/button";
+import { ThemeProvider } from "@/components/ThemeProvider";
+import Dashboard from "@/components/Dashboard";
+import Onboarding from "@/components/Onboarding";
 
 const Index = () => {
+  const [isOnboarded, setIsOnboarded] = useState(false);
+
+  useEffect(() => {
+    const onboardingStatus = localStorage.getItem('healthApp_onboarded');
+    setIsOnboarded(onboardingStatus === 'true');
+  }, []);
+
+  const handleOnboardingComplete = () => {
+    localStorage.setItem('healthApp_onboarded', 'true');
+    setIsOnboarded(true);
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
+    <ThemeProvider defaultTheme="light" storageKey="health-app-theme">
+      <div className="min-h-screen bg-background">
+        {!isOnboarded ? (
+          <Onboarding onComplete={handleOnboardingComplete} />
+        ) : (
+          <Dashboard />
+        )}
+        <Toaster />
       </div>
-    </div>
+    </ThemeProvider>
   );
 };
 
