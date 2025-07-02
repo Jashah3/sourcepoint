@@ -17,43 +17,50 @@ export const AnimatedFoodBackground = () => {
     { emoji: '🥕', id: 12, delay: '11s', duration: '18s' }
   ]);
 
+  const floatKeyframes = `
+    @keyframes float {
+      0%, 100% {
+        transform: translateY(0px) rotate(0deg);
+      }
+      25% {
+        transform: translateY(-20px) rotate(90deg);
+      }
+      50% {
+        transform: translateY(-40px) rotate(180deg);
+      }
+      75% {
+        transform: translateY(-20px) rotate(270deg);
+      }
+    }
+  `;
+
+  useEffect(() => {
+    // Inject the keyframes into the document head
+    const styleElement = document.createElement('style');
+    styleElement.textContent = floatKeyframes;
+    document.head.appendChild(styleElement);
+
+    return () => {
+      document.head.removeChild(styleElement);
+    };
+  }, [floatKeyframes]);
+
   return (
     <div className="fixed inset-0 -z-20 overflow-hidden pointer-events-none">
       {foodItems.map((item) => (
         <div
           key={item.id}
-          className="absolute text-6xl opacity-10 blur-sm animate-float"
+          className="absolute text-6xl opacity-10 blur-sm"
           style={{
             left: `${Math.random() * 100}%`,
             top: `${Math.random() * 100}%`,
+            animation: `float ${item.duration} infinite ease-in-out`,
             animationDelay: item.delay,
-            animationDuration: item.duration,
           }}
         >
           {item.emoji}
         </div>
       ))}
-      
-      <style jsx>{`
-        @keyframes float {
-          0%, 100% {
-            transform: translateY(0px) rotate(0deg);
-          }
-          25% {
-            transform: translateY(-20px) rotate(90deg);
-          }
-          50% {
-            transform: translateY(-40px) rotate(180deg);
-          }
-          75% {
-            transform: translateY(-20px) rotate(270deg);
-          }
-        }
-        
-        .animate-float {
-          animation: float infinite ease-in-out;
-        }
-      `}</style>
     </div>
   );
 };
