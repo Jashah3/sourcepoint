@@ -1,15 +1,20 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Timer, Award, Activity, TrendingUp, Flame, Zap } from "lucide-react";
+import { Timer, Award, Activity, TrendingUp, Flame, Zap, Clock, Dumbbell } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { AIWorkoutBuddy } from "@/components/AIWorkoutBuddy";
+import { useHealthData } from "@/contexts/HealthDataContext";
 
 export const WorkoutTracker = () => {
   const [activeWorkout, setActiveWorkout] = useState<any>(null);
   const [expandedStat, setExpandedStat] = useState<string | null>(null);
+  const [hoveredWorkout, setHoveredWorkout] = useState<number | null>(null);
+  const [activeTab, setActiveTab] = useState("workouts");
+  
+  const { healthData, completeWorkout } = useHealthData();
   
   const workoutPlans = [
     {
@@ -92,15 +97,15 @@ export const WorkoutTracker = () => {
   ];
 
   const weeklyStats = {
-    workoutsCompleted: 4,
-    totalMinutes: 180,
-    caloriesBurned: 850,
-    streak: 7,
+    workoutsCompleted: healthData.workoutsCompleted,
+    totalMinutes: healthData.workoutsCompleted * 45,
+    caloriesBurned: healthData.workoutsCompleted * 200,
+    streak: healthData.streak,
     completedWorkouts: [
-      { name: 'Upper Body Push', date: 'Today', bodyParts: ['Chest', 'Shoulders'], intensity: 'High' },
-      { name: 'Lower Body Power', date: 'Yesterday', bodyParts: ['Legs', 'Glutes'], intensity: 'Very High' },
-      { name: 'HIIT Cardio', date: '2 days ago', bodyParts: ['Full Body'], intensity: 'Extreme' },
-      { name: 'Core & Stability', date: '3 days ago', bodyParts: ['Core'], intensity: 'Moderate' }
+      { name: 'Upper Body Push', date: 'Today', bodyParts: ['Chest', 'Shoulders'], intensity: 'High', minutes: 45, reps: 120, recovery: 'Protein shake + 15min stretch' },
+      { name: 'Lower Body Power', date: 'Yesterday', bodyParts: ['Legs', 'Glutes'], intensity: 'Very High', minutes: 50, reps: 96, recovery: 'Ice bath + foam rolling' },
+      { name: 'HIIT Cardio', date: '2 days ago', bodyParts: ['Full Body'], intensity: 'Extreme', minutes: 25, reps: 200, recovery: 'Light walk + hydration' },
+      { name: 'Core & Stability', date: '3 days ago', bodyParts: ['Core'], intensity: 'Moderate', minutes: 30, reps: 80, recovery: 'Meditation + stretching' }
     ],
     remainingWorkouts: ['Upper Body Pull', 'Kegel Exercises'],
     motivationalMessages: [
@@ -115,6 +120,22 @@ export const WorkoutTracker = () => {
       "💥 You've earned that post-workout meal!",
       "🌟 Your metabolism is thanking you!"
     ]
+  };
+
+  const handleStartWorkout = (workout: any) => {
+    setActiveWorkout(workout);
+    setActiveTab("active");
+  };
+
+  const handleCompleteWorkout = () => {
+    completeWorkout();
+    setActiveWorkout(null);
+    setActiveTab("history");
+  };
+
+  const handlePauseWorkout = () => {
+    setActiveWorkout(null);
+    setActiveTab("workouts");
   };
 
   return (
@@ -153,12 +174,6 @@ export const WorkoutTracker = () => {
                       </div>
                     </div>
                   ))}
-                  <div className="mt-3 p-2 bg-yellow-50 dark:bg-yellow-900/20 rounded">
-                    <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">🎯 Remaining:</p>
-                    <p className="text-xs text-yellow-600 dark:text-yellow-400">
-                      {weeklyStats.remainingWorkouts.join(', ')}
-                    </p>
-                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -189,15 +204,6 @@ export const WorkoutTracker = () => {
                       {message}
                     </p>
                   ))}
-                  <div className="mt-3 p-2 bg-indigo-50 dark:bg-indigo-900/20 rounded">
-                    <p className="text-sm font-medium text-indigo-800 dark:text-indigo-200">🎯 Goal: 300 min/week</p>
-                    <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
-                      <div className="bg-indigo-600 h-2 rounded-full" style={{ width: `${(weeklyStats.totalMinutes / 300) * 100}%` }}></div>
-                    </div>
-                    <p className="text-xs text-indigo-600 dark:text-indigo-400 mt-1">
-                      {300 - weeklyStats.totalMinutes} minutes to go!
-                    </p>
-                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -247,7 +253,7 @@ export const WorkoutTracker = () => {
         </Card>
       </div>
 
-      <Tabs defaultValue="workouts" className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="workouts">Available Workouts</TabsTrigger>
           <TabsTrigger value="active">Active Workout</TabsTrigger>
@@ -298,7 +304,7 @@ export const WorkoutTracker = () => {
                   </div>
                   <Button 
                     className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
-                    onClick={() => setActiveWorkout(workout)}
+                    onClick={() => handleStartWorkout(workout)}
                   >
                     Start Workout
                   </Button>
@@ -310,49 +316,11 @@ export const WorkoutTracker = () => {
 
         <TabsContent value="active" className="space-y-4">
           {activeWorkout ? (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Activity className="h-5 w-5" />
-                  {activeWorkout.name}
-                </CardTitle>
-                <div className="flex gap-2 mt-2">
-                  {activeWorkout.targetMuscles.map((muscle: string, index: number) => (
-                    <Badge key={index} variant="outline">{muscle}</Badge>
-                  ))}
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {activeWorkout.exercises.map((exercise: any, index: number) => (
-                    <div key={index} className="p-4 border rounded-lg bg-gradient-to-r from-gray-50 to-slate-50 dark:from-gray-800 dark:to-slate-800">
-                      <div className="flex justify-between items-center mb-2">
-                        <h4 className="font-medium">{exercise.name}</h4>
-                        <Badge variant="outline">{exercise.sets} sets</Badge>
-                      </div>
-                      <p className="text-sm text-muted-foreground mb-2">
-                        {exercise.reps} reps • {exercise.rest}s rest • Target: {exercise.primaryMuscle}
-                      </p>
-                      <div className="flex gap-2">
-                        {Array.from({ length: exercise.sets }).map((_, setIndex) => (
-                          <Button key={setIndex} variant="outline" size="sm">
-                            Set {setIndex + 1}
-                          </Button>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                  <div className="flex gap-2 pt-4">
-                    <Button variant="outline" className="flex-1">
-                      Pause Workout
-                    </Button>
-                    <Button className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700">
-                      Complete Workout
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <AIWorkoutBuddy 
+              workout={activeWorkout}
+              onCompleteWorkout={handleCompleteWorkout}
+              onPauseWorkout={handlePauseWorkout}
+            />
           ) : (
             <Card>
               <CardContent className="pt-6">
@@ -376,17 +344,48 @@ export const WorkoutTracker = () => {
             <CardContent>
               <div className="space-y-4">
                 {weeklyStats.completedWorkouts.map((session, index) => (
-                  <div key={index} className="flex justify-between items-center p-4 border rounded-lg hover:bg-gradient-to-r hover:from-gray-50 hover:to-slate-50 dark:hover:from-gray-800 dark:hover:to-slate-800 transition-all duration-200">
-                    <div>
-                      <p className="font-medium">{session.name}</p>
-                      <p className="text-sm text-muted-foreground">{session.date}</p>
-                      <p className="text-xs text-blue-600">{session.bodyParts.join(', ')}</p>
+                  <div 
+                    key={index} 
+                    className="group"
+                    onMouseEnter={() => setHoveredWorkout(index)}
+                    onMouseLeave={() => setHoveredWorkout(null)}
+                  >
+                    <div className="flex justify-between items-center p-4 border rounded-lg hover:bg-gradient-to-r hover:from-gray-50 hover:to-slate-50 dark:hover:from-gray-800 dark:hover:to-slate-800 transition-all duration-200 cursor-pointer">
+                      <div>
+                        <p className="font-medium">{session.name}</p>
+                        <p className="text-sm text-muted-foreground">{session.date}</p>
+                        <p className="text-xs text-blue-600">{session.bodyParts.join(', ')}</p>
+                      </div>
+                      <div className="text-right">
+                        <Badge variant={session.intensity === 'Extreme' ? 'destructive' : session.intensity === 'Very High' ? 'default' : 'secondary'}>
+                          {session.intensity}
+                        </Badge>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <Badge variant={session.intensity === 'Extreme' ? 'destructive' : session.intensity === 'Very High' ? 'default' : 'secondary'}>
-                        {session.intensity}
-                      </Badge>
-                    </div>
+                    
+                    {hoveredWorkout === index && (
+                      <div className="mt-2 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg border border-blue-200 dark:border-blue-800 animate-fade-in">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                          <div>
+                            <p className="font-medium text-blue-800 dark:text-blue-200 mb-1">📊 Workout Stats</p>
+                            <p><span className="text-muted-foreground">Duration:</span> {session.minutes} minutes</p>
+                            <p><span className="text-muted-foreground">Total Reps:</span> {session.reps}</p>
+                          </div>
+                          <div>
+                            <p className="font-medium text-green-800 dark:text-green-200 mb-1">💪 Muscles Worked</p>
+                            {session.bodyParts.map((muscle, idx) => (
+                              <Badge key={idx} variant="outline" className="mr-1 mb-1 text-xs">
+                                {muscle}
+                              </Badge>
+                            ))}
+                          </div>
+                          <div>
+                            <p className="font-medium text-purple-800 dark:text-purple-200 mb-1">🔄 Recovery Strategy</p>
+                            <p className="text-xs text-purple-600 dark:text-purple-400">{session.recovery}</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>

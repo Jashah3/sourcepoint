@@ -3,25 +3,27 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { User, TrendingUp, Award, Flame, Scale, Dumbbell } from "lucide-react";
+import { useHealthData } from "@/contexts/HealthDataContext";
 
 export const ProfileDashboard = () => {
+  const { healthData } = useHealthData();
+  
   const profileStats = {
-    currentStreak: 7,
+    currentStreak: healthData.streak,
     longestStreak: 23,
     weightLost: 5.2,
     weightGoal: 10,
-    muscleGained: 2.1,
+    muscleGained: healthData.muscleGained,
     muscleGoal: 5,
-    totalWorkouts: 45,
-    totalMeals: 156
+    totalWorkouts: healthData.workoutsCompleted * 11, // Simulated total
+    totalMeals: healthData.mealsLogged * 52 // Simulated total
   };
 
-  const recentBadges = [
-    { name: "Week Warrior", icon: "🗓️", earned: "Today" },
-    { name: "Hydration Hero", icon: "💧", earned: "2 days ago" },
-    { name: "Protein Power", icon: "💪", earned: "3 days ago" },
-    { name: "Consistency King", icon: "👑", earned: "1 week ago" }
-  ];
+  const recentBadges = healthData.badges.slice(-4).map((badge, index) => ({
+    name: badge,
+    icon: index === 0 ? "🗓️" : index === 1 ? "💧" : index === 2 ? "💪" : "👑",
+    earned: index === 0 ? "Today" : index === 1 ? "2 days ago" : index === 2 ? "3 days ago" : "1 week ago"
+  }));
 
   return (
     <div className="space-y-6">
@@ -77,7 +79,7 @@ export const ProfileDashboard = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Award className="h-5 w-5" />
-            Recent Achievements
+            Recent Achievements ({healthData.achievements} Total)
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -94,6 +96,82 @@ export const ProfileDashboard = () => {
           </div>
         </CardContent>
       </Card>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Today's Progress</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div>
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-sm font-medium">Calories</span>
+                  <span className="text-sm text-muted-foreground">{healthData.dailyCalories}/{healthData.calorieGoal}</span>
+                </div>
+                <Progress value={(healthData.dailyCalories / healthData.calorieGoal) * 100} className="h-2" />
+              </div>
+              
+              <div>
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-sm font-medium">Water Intake</span>
+                  <span className="text-sm text-muted-foreground">{healthData.waterIntake}/{healthData.waterGoal} glasses</span>
+                </div>
+                <Progress value={(healthData.waterIntake / healthData.waterGoal) * 100} className="h-2" />
+              </div>
+              
+              <div>
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-sm font-medium">Protein</span>
+                  <span className="text-sm text-muted-foreground">{healthData.proteinIntake}g/{healthData.proteinGoal}g</span>
+                </div>
+                <Progress value={(healthData.proteinIntake / healthData.proteinGoal) * 100} className="h-2" />
+              </div>
+              
+              <div>
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-sm font-medium">Steps</span>
+                  <span className="text-sm text-muted-foreground">{healthData.steps.toLocaleString()}/{healthData.stepGoal.toLocaleString()}</span>
+                </div>
+                <Progress value={(healthData.steps / healthData.stepGoal) * 100} className="h-2" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Health Insights</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="text-center">
+                <div className="text-3xl font-bold text-green-600 mb-2">{healthData.healthScore}%</div>
+                <p className="text-sm text-muted-foreground">Overall Health Score</p>
+              </div>
+              
+              <div className="space-y-2">
+                <div className="flex justify-between items-center text-sm">
+                  <span>Weekly Workouts:</span>
+                  <Badge variant="secondary">{healthData.workoutsCompleted}/7</Badge>
+                </div>
+                <div className="flex justify-between items-center text-sm">
+                  <span>Supplements Taken:</span>
+                  <Badge variant="secondary">{healthData.supplementsTaken.length}/8</Badge>
+                </div>
+                <div className="flex justify-between items-center text-sm">
+                  <span>Sleep Quality:</span>
+                  <Badge variant="secondary">{healthData.sleepHours}h avg</Badge>
+                </div>
+                <div className="flex justify-between items-center text-sm">
+                  <span>Active Streak:</span>
+                  <Badge variant="default">{healthData.streak} days</Badge>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };

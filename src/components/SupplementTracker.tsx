@@ -1,16 +1,24 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
-import { Shield, Clock, AlertTriangle, Utensils, Info } from "lucide-react";
+import { Shield, Clock, AlertTriangle, Utensils, Info, Plus } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { useHealthData } from "@/contexts/HealthDataContext";
+import { useToast } from "@/hooks/use-toast";
 
 export const SupplementTracker = () => {
   const [takenToday, setTakenToday] = useState<string[]>(['protein', 'creatine']);
   const [expandedSupplement, setExpandedSupplement] = useState<string | null>(null);
+  const [myStack, setMyStack] = useState<string[]>([
+    'Vitamin D3', 'Omega-3 Fish Oil', 'CoQ10', 'Shilajit', 
+    'Beetroot Powder', 'Vitamin B2 (Riboflavin)', 'Whey Protein', 'Creatine Monohydrate'
+  ]);
+  
+  const { addSupplement } = useHealthData();
+  const { toast } = useToast();
 
   const supplements = [
     {
@@ -144,6 +152,28 @@ export const SupplementTracker = () => {
         ? prev.filter(id => id !== supplementId)
         : [...prev, supplementId]
     );
+    
+    if (!takenToday.includes(supplementId)) {
+      const supplement = supplements.find(s => s.id === supplementId);
+      if (supplement) {
+        addSupplement(supplement.name);
+      }
+    }
+  };
+
+  const handleAddToStack = (supplementName: string) => {
+    if (!myStack.includes(supplementName)) {
+      setMyStack(prev => [...prev, supplementName]);
+      toast({
+        title: "Supplement Added!",
+        description: `${supplementName} has been added to your stack.`
+      });
+    } else {
+      toast({
+        title: "Already in Stack",
+        description: `${supplementName} is already in your supplement stack.`
+      });
+    }
   };
 
   const completionRate = (takenToday.length / supplements.length) * 100;
@@ -165,6 +195,9 @@ export const SupplementTracker = () => {
               </span>
             </div>
             <Progress value={completionRate} className="h-3" />
+            <div className="text-center">
+              <p className="text-xs text-muted-foreground">My Stack: {myStack.length} supplements</p>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -194,6 +227,9 @@ export const SupplementTracker = () => {
                             <h4 className="font-medium">{supplement.name}</h4>
                             <div className="flex gap-2">
                               <Badge variant="secondary">{supplement.dosage}</Badge>
+                              {myStack.includes(supplement.name) && (
+                                <Badge variant="default" className="text-xs">In Stack</Badge>
+                              )}
                               <Info className="h-4 w-4 text-muted-foreground" />
                             </div>
                           </div>
@@ -269,7 +305,7 @@ export const SupplementTracker = () => {
                     {rec.priority} priority
                   </Badge>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm mb-3">
                   <div>
                     <p className="font-medium">Dosage:</p>
                     <p className="text-muted-foreground">{rec.dosage}</p>
@@ -283,7 +319,13 @@ export const SupplementTracker = () => {
                     <p className="text-muted-foreground">{rec.benefits}</p>
                   </div>
                 </div>
-                <Button variant="outline" size="sm" className="mt-3">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => handleAddToStack(rec.supplement)}
+                  className="flex items-center gap-2"
+                >
+                  <Plus className="h-4 w-4" />
                   Add to My Stack
                 </Button>
               </div>
