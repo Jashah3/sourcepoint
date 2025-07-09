@@ -5,15 +5,22 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { useTheme } from "./ThemeProvider";
 import { HealthIntegrations } from "@/services/healthIntegrations";
 import { GoogleCalendarService } from "@/services/googleCalendar";
 import { toast } from "@/hooks/use-toast";
-import { CheckCircle, Circle, Smartphone, Watch, Calendar } from "lucide-react";
+import { CheckCircle, Circle, Smartphone, Watch, Calendar, Key, Bot, Cpu } from "lucide-react";
 
 export const Settings = () => {
   const { theme, setTheme } = useTheme();
   const [connecting, setConnecting] = useState<string | null>(null);
+  const [apiKeys, setApiKeys] = useState({
+    openai: localStorage.getItem('openai_api_key') || '',
+    anthropic: localStorage.getItem('anthropic_api_key') || '',
+    perplexity: localStorage.getItem('perplexity_api_key') || '',
+    elevenlabs: localStorage.getItem('elevenlabs_api_key') || ''
+  });
   const healthService = HealthIntegrations.getInstance();
   const calendarService = GoogleCalendarService.getInstance();
 
@@ -64,6 +71,15 @@ export const Settings = () => {
   const resetOnboarding = () => {
     localStorage.removeItem('sourcePoint_onboarded');
     window.location.reload();
+  };
+
+  const handleApiKeyChange = (service: string, value: string) => {
+    setApiKeys(prev => ({ ...prev, [service]: value }));
+    localStorage.setItem(`${service}_api_key`, value);
+    toast({
+      title: "API Key Updated",
+      description: `${service.charAt(0).toUpperCase() + service.slice(1)} API key has been saved.`
+    });
   };
 
   const clearAllData = () => {
@@ -218,6 +234,76 @@ export const Settings = () => {
             >
               {connecting === 'fitbit' ? 'Connecting...' : healthService.isFitbitConnected() ? '✓ Connected' : 'Connect'}
             </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border-gray-200 dark:border-gray-700 hover:shadow-xl transition-all duration-300">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-gray-800 dark:text-gray-200">
+            <Bot className="h-5 w-5 text-gray-600" />
+            AI Services Configuration
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+            <div className="flex items-center gap-2 mb-3">
+              <Cpu className="h-4 w-4 text-blue-600" />
+              <span className="font-medium text-blue-800 dark:text-blue-200">OpenAI API</span>
+            </div>
+            <Input
+              placeholder="Enter your OpenAI API key"
+              type="password"
+              value={apiKeys.openai}
+              onChange={(e) => handleApiKeyChange('openai', e.target.value)}
+              className="bg-white/50 dark:bg-gray-700/50"
+            />
+            <p className="text-xs text-muted-foreground mt-2">Used for AI health coach responses</p>
+          </div>
+
+          <div className="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+            <div className="flex items-center gap-2 mb-3">
+              <Key className="h-4 w-4 text-purple-600" />
+              <span className="font-medium text-purple-800 dark:text-purple-200">Anthropic API</span>
+            </div>
+            <Input
+              placeholder="Enter your Anthropic API key"
+              type="password"
+              value={apiKeys.anthropic}
+              onChange={(e) => handleApiKeyChange('anthropic', e.target.value)}
+              className="bg-white/50 dark:bg-gray-700/50"
+            />
+            <p className="text-xs text-muted-foreground mt-2">Alternative AI provider for enhanced responses</p>
+          </div>
+
+          <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
+            <div className="flex items-center gap-2 mb-3">
+              <Bot className="h-4 w-4 text-green-600" />
+              <span className="font-medium text-green-800 dark:text-green-200">Perplexity API</span>
+            </div>
+            <Input
+              placeholder="Enter your Perplexity API key"
+              type="password"
+              value={apiKeys.perplexity}
+              onChange={(e) => handleApiKeyChange('perplexity', e.target.value)}
+              className="bg-white/50 dark:bg-gray-700/50"
+            />
+            <p className="text-xs text-muted-foreground mt-2">Real-time health research and information</p>
+          </div>
+
+          <div className="p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
+            <div className="flex items-center gap-2 mb-3">
+              <Smartphone className="h-4 w-4 text-orange-600" />
+              <span className="font-medium text-orange-800 dark:text-orange-200">ElevenLabs API</span>
+            </div>
+            <Input
+              placeholder="Enter your ElevenLabs API key"
+              type="password"
+              value={apiKeys.elevenlabs}
+              onChange={(e) => handleApiKeyChange('elevenlabs', e.target.value)}
+              className="bg-white/50 dark:bg-gray-700/50"
+            />
+            <p className="text-xs text-muted-foreground mt-2">Voice assistant and text-to-speech functionality</p>
           </div>
         </CardContent>
       </Card>

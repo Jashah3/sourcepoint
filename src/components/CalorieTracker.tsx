@@ -11,6 +11,7 @@ import { Plus, Search, Camera, Mic, TrendingUp, Target } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { CameraFoodRecognition } from "./CameraFoodRecognition";
 import { FoodRecommendations } from "./FoodRecommendations";
+import { useHealthData } from "@/contexts/HealthDataContext";
 
 export const CalorieTracker = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -18,33 +19,7 @@ export const CalorieTracker = () => {
   const [quantity, setQuantity] = useState('1');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [hoveredNutrient, setHoveredNutrient] = useState<string | null>(null);
-
-  const foodCategories = {
-    meats: [
-      { id: 1, name: 'Chicken Breast', calories_per_100g: 165, protein: 31, carbs: 0, fat: 3.6, vitamins: { B6: '0.6mg', B12: '0.3mcg', Niacin: '14mg' }, minerals: { Iron: '1mg', Zinc: '1mg' } },
-      { id: 2, name: 'Salmon', calories_per_100g: 208, protein: 25, carbs: 0, fat: 12, vitamins: { D: '360IU', B12: '4.9mcg', B6: '0.6mg' }, minerals: { Iron: '0.8mg', Magnesium: '30mg' } },
-      { id: 3, name: 'Lean Beef', calories_per_100g: 250, protein: 26, carbs: 0, fat: 15, vitamins: { B12: '2.6mcg', B6: '0.4mg', Niacin: '4.2mg' }, minerals: { Iron: '2.6mg', Zinc: '4.8mg' } },
-    ],
-    vegetables: [
-      { id: 4, name: 'Broccoli', calories_per_100g: 34, protein: 2.8, carbs: 7, fat: 0.4, vitamins: { C: '89mg', K: '102mcg', Folate: '63mcg' }, minerals: { Iron: '0.7mg', Calcium: '47mg' } },
-      { id: 5, name: 'Spinach', calories_per_100g: 23, protein: 2.9, carbs: 3.6, fat: 0.4, vitamins: { K: '483mcg', A: '469mcg', Folate: '194mcg' }, minerals: { Iron: '2.7mg', Magnesium: '79mg' } },
-      { id: 6, name: 'Bell Peppers', calories_per_100g: 31, protein: 1, carbs: 7, fat: 0.3, vitamins: { C: '190mg', A: '157mcg', B6: '0.3mg' }, minerals: { Potassium: '211mg' } },
-    ],
-    fruits: [
-      { id: 7, name: 'Banana', calories_per_100g: 89, protein: 1.1, carbs: 22.8, fat: 0.3, vitamins: { C: '8.7mg', B6: '0.4mg', Folate: '20mcg' }, minerals: { Potassium: '358mg', Magnesium: '27mg' } },
-      { id: 8, name: 'Apple', calories_per_100g: 52, protein: 0.3, carbs: 14, fat: 0.2, vitamins: { C: '4.6mg', K: '2.2mcg' }, minerals: { Potassium: '107mg' } },
-      { id: 9, name: 'Berries Mix', calories_per_100g: 57, protein: 0.7, carbs: 14, fat: 0.3, vitamins: { C: '60mg', K: '19mcg', Folate: '6mcg' }, minerals: { Manganese: '0.4mg' } },
-    ],
-    grains: [
-      { id: 10, name: 'Brown Rice', calories_per_100g: 111, protein: 2.6, carbs: 23, fat: 0.9, vitamins: { B1: '0.1mg', B3: '1.5mg' }, minerals: { Magnesium: '44mg', Phosphorus: '83mg' } },
-      { id: 11, name: 'Quinoa', calories_per_100g: 120, protein: 4.4, carbs: 22, fat: 1.9, vitamins: { Folate: '42mcg', B6: '0.1mg' }, minerals: { Iron: '1.5mg', Magnesium: '64mg' } },
-      { id: 12, name: 'Oats', calories_per_100g: 389, protein: 16.9, carbs: 66, fat: 6.9, vitamins: { B1: '0.8mg', Folate: '56mcg' }, minerals: { Iron: '4.7mg', Zinc: '4mg' } },
-    ]
-  };
-
-  const allFoods = Object.values(foodCategories).flat();
-
-  const todaysMeals = [
+  const [todaysMeals, setTodaysMeals] = useState([
     { 
       id: 1, 
       meal: 'Breakfast', 
@@ -90,7 +65,34 @@ export const CalorieTracker = () => {
         prepTime: '2 minutes'
       }
     }
-  ];
+  ]);
+  
+  const { incrementCalories, incrementProtein, logMeal } = useHealthData();
+
+  const foodCategories = {
+    meats: [
+      { id: 1, name: 'Chicken Breast', calories_per_100g: 165, protein: 31, carbs: 0, fat: 3.6, vitamins: { B6: '0.6mg', B12: '0.3mcg', Niacin: '14mg' }, minerals: { Iron: '1mg', Zinc: '1mg' } },
+      { id: 2, name: 'Salmon', calories_per_100g: 208, protein: 25, carbs: 0, fat: 12, vitamins: { D: '360IU', B12: '4.9mcg', B6: '0.6mg' }, minerals: { Iron: '0.8mg', Magnesium: '30mg' } },
+      { id: 3, name: 'Lean Beef', calories_per_100g: 250, protein: 26, carbs: 0, fat: 15, vitamins: { B12: '2.6mcg', B6: '0.4mg', Niacin: '4.2mg' }, minerals: { Iron: '2.6mg', Zinc: '4.8mg' } },
+    ],
+    vegetables: [
+      { id: 4, name: 'Broccoli', calories_per_100g: 34, protein: 2.8, carbs: 7, fat: 0.4, vitamins: { C: '89mg', K: '102mcg', Folate: '63mcg' }, minerals: { Iron: '0.7mg', Calcium: '47mg' } },
+      { id: 5, name: 'Spinach', calories_per_100g: 23, protein: 2.9, carbs: 3.6, fat: 0.4, vitamins: { K: '483mcg', A: '469mcg', Folate: '194mcg' }, minerals: { Iron: '2.7mg', Magnesium: '79mg' } },
+      { id: 6, name: 'Bell Peppers', calories_per_100g: 31, protein: 1, carbs: 7, fat: 0.3, vitamins: { C: '190mg', A: '157mcg', B6: '0.3mg' }, minerals: { Potassium: '211mg' } },
+    ],
+    fruits: [
+      { id: 7, name: 'Banana', calories_per_100g: 89, protein: 1.1, carbs: 22.8, fat: 0.3, vitamins: { C: '8.7mg', B6: '0.4mg', Folate: '20mcg' }, minerals: { Potassium: '358mg', Magnesium: '27mg' } },
+      { id: 8, name: 'Apple', calories_per_100g: 52, protein: 0.3, carbs: 14, fat: 0.2, vitamins: { C: '4.6mg', K: '2.2mcg' }, minerals: { Potassium: '107mg' } },
+      { id: 9, name: 'Berries Mix', calories_per_100g: 57, protein: 0.7, carbs: 14, fat: 0.3, vitamins: { C: '60mg', K: '19mcg', Folate: '6mcg' }, minerals: { Manganese: '0.4mg' } },
+    ],
+    grains: [
+      { id: 10, name: 'Brown Rice', calories_per_100g: 111, protein: 2.6, carbs: 23, fat: 0.9, vitamins: { B1: '0.1mg', B3: '1.5mg' }, minerals: { Magnesium: '44mg', Phosphorus: '83mg' } },
+      { id: 11, name: 'Quinoa', calories_per_100g: 120, protein: 4.4, carbs: 22, fat: 1.9, vitamins: { Folate: '42mcg', B6: '0.1mg' }, minerals: { Iron: '1.5mg', Magnesium: '64mg' } },
+      { id: 12, name: 'Oats', calories_per_100g: 389, protein: 16.9, carbs: 66, fat: 6.9, vitamins: { B1: '0.8mg', Folate: '56mcg' }, minerals: { Iron: '4.7mg', Zinc: '4mg' } },
+    ]
+  };
+
+  const allFoods = Object.values(foodCategories).flat();
 
   const dailyGoals = {
     calories: 2000,
@@ -114,14 +116,44 @@ export const CalorieTracker = () => {
 
   const handleAddFood = () => {
     if (selectedFood && quantity) {
-      const calories = (selectedFood.calories_per_100g * parseFloat(quantity)) / 100;
+      const quantityNum = parseFloat(quantity);
+      const calories = (selectedFood.calories_per_100g * quantityNum) / 100;
+      const protein = (selectedFood.protein * quantityNum) / 100;
+      const carbs = (selectedFood.carbs * quantityNum) / 100;
+      const fat = (selectedFood.fat * quantityNum) / 100;
+
+      // Add to today's meals
+      const newMeal = {
+        id: todaysMeals.length + 1,
+        meal: 'Snack', // Default to snack, could be made selectable
+        food: selectedFood.name,
+        calories: Math.round(calories),
+        protein: Math.round(protein * 10) / 10,
+        carbs: Math.round(carbs * 10) / 10,
+        fat: Math.round(fat * 10) / 10,
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        recipe: {
+          ingredients: [`${quantityNum}g ${selectedFood.name}`],
+          steps: ['Consume as per quantity'],
+          prepTime: '1 minute'
+        }
+      };
+
+      setTodaysMeals(prev => [...prev, newMeal]);
+
+      // Update health data context
+      incrementCalories(Math.round(calories));
+      incrementProtein(Math.round(protein * 10) / 10);
+      logMeal();
+
       toast({
         title: "Food Added! 🎉",
-        description: `${selectedFood.name} (${quantity}g) - ${calories.toFixed(0)} calories`,
+        description: `${selectedFood.name} (${quantity}g) added to your meal plan - ${calories.toFixed(0)} calories`,
         className: "animate-fade-in"
       });
+
       setSelectedFood(null);
-      setQuantity('1');
+      setQuantity('100');
       setSearchQuery('');
     }
   };

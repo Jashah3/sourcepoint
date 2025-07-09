@@ -2,7 +2,9 @@
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Award, TrendingUp, Zap, Target, Calendar, Star } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Award, TrendingUp, Zap, Target, Calendar, Star, StarOff } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
 
 export const HealthBadges = () => {
   const [unlockedBadges] = useState([
@@ -17,6 +19,38 @@ export const HealthBadges = () => {
     { id: 9, name: "Strength Seeker", description: "Lifted 1000kg total volume", icon: "🏋️", unlocked: false, color: "bg-yellow-500" },
     { id: 10, name: "Wellness Warrior", description: "30 days of consistent tracking", icon: "🌟", unlocked: false, color: "bg-indigo-500" }
   ]);
+  
+  const [starredBadges, setStarredBadges] = useState<number[]>(() => {
+    const saved = localStorage.getItem('starred_badges');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  const toggleStarBadge = (badgeId: number) => {
+    const badge = unlockedBadges.find(b => b.id === badgeId);
+    if (!badge?.unlocked) {
+      toast({
+        title: "Badge Not Unlocked",
+        description: "You can only star badges you've earned!",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setStarredBadges(prev => {
+      const newStarred = prev.includes(badgeId) 
+        ? prev.filter(id => id !== badgeId)
+        : [...prev, badgeId];
+      
+      localStorage.setItem('starred_badges', JSON.stringify(newStarred));
+      
+      toast({
+        title: newStarred.includes(badgeId) ? "Badge Starred!" : "Badge Unstarred",
+        description: `${badge.name} ${newStarred.includes(badgeId) ? 'added to' : 'removed from'} your starred collection.`
+      });
+      
+      return newStarred;
+    });
+  };
 
   return (
     <Card className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
@@ -39,10 +73,26 @@ export const HealthBadges = () => {
             >
               <div className="text-2xl mb-2">{badge.icon}</div>
               <p className="text-xs font-medium mb-1">{badge.name}</p>
-              <p className="text-xs opacity-80">{badge.description}</p>
+              <p className="text-xs opacity-80 mb-2">{badge.description}</p>
+              
               {badge.unlocked && (
-                <div className="absolute -top-1 -right-1 bg-yellow-400 rounded-full p-1">
-                  <Star className="h-3 w-3 text-yellow-800" />
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => toggleStarBadge(badge.id)}
+                  className="absolute -top-1 -right-1 h-6 w-6 p-0 bg-white/90 hover:bg-white rounded-full"
+                >
+                  {starredBadges.includes(badge.id) ? (
+                    <Star className="h-3 w-3 text-yellow-500 fill-current" />
+                  ) : (
+                    <StarOff className="h-3 w-3 text-gray-400" />
+                  )}
+                </Button>
+              )}
+              
+              {starredBadges.includes(badge.id) && (
+                <div className="absolute -bottom-1 -left-1 bg-yellow-400 rounded-full p-1">
+                  <Star className="h-2 w-2 text-yellow-800 fill-current" />
                 </div>
               )}
             </div>
