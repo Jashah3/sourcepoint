@@ -1,5 +1,7 @@
 
 // Google Calendar integration service
+import { GoogleAPIService } from './googleAPI';
+
 declare global {
   interface Window {
     gapi: any;
@@ -29,7 +31,11 @@ export interface CalendarEvent {
 
 export class GoogleCalendarService {
   private static instance: GoogleCalendarService;
-  private isInitialized = false;
+  private googleAPI: GoogleAPIService;
+
+  constructor() {
+    this.googleAPI = GoogleAPIService.getInstance();
+  }
 
   public static getInstance(): GoogleCalendarService {
     if (!GoogleCalendarService.instance) {
@@ -40,40 +46,38 @@ export class GoogleCalendarService {
 
   async initialize(): Promise<boolean> {
     try {
-      if (!window.gapi) {
-        await this.loadGoogleAPI();
+      // Get API credentials from localStorage
+      const apiKey = localStorage.getItem('google_api_key');
+      const clientId = localStorage.getItem('google_client_id');
+      
+      if (!apiKey || !clientId) {
+        console.warn('Google API credentials not found. Please configure them in Settings.');
+        return false;
       }
 
-      await new Promise<void>((resolve) => {
-        window.gapi.load('client:auth2', resolve);
-      });
-
-      await window.gapi.client.init({
-        apiKey: 'your-google-api-key',
-        clientId: 'your-google-client-id.apps.googleusercontent.com',
+      return await this.googleAPI.initialize({
+        apiKey,
+        clientId,
         discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest'],
         scope: 'https://www.googleapis.com/auth/calendar'
       });
-
-      this.isInitialized = true;
-      return true;
     } catch (error) {
-      console.error('Failed to initialize Google Calendar:', error);
+      console.error('Failed to initialize Google Calendar API:', error);
       return false;
     }
   }
 
   async signIn(): Promise<boolean> {
     try {
-      if (!this.isInitialized) {
-        await this.initialize();
-      }
-
-      const authInstance = window.gapi.auth2.getAuthInstance();
-      const user = await authInstance.signIn();
+      const initialized = await this.initialize();
+      if (!initialized) return false;
       
-      localStorage.setItem('googleCalendar_connected', 'true');
-      return user.isSignedIn();
+      const success = await this.googleAPI.signIn();
+      if (success) {
+        localStorage.setItem('googleCalendar_connected', 'true');
+      }
+      
+      return success;
     } catch (error) {
       console.error('Google Calendar sign-in failed:', error);
       return false;
@@ -102,7 +106,10 @@ export class GoogleCalendarService {
         }
       };
 
-      const response = await window.gapi.client.calendar.events.insert({
+      const client = this.googleAPI.getClient();
+      if (!client) throw new Error('Google API client not available');
+
+      const response = await client.calendar.events.insert({
         calendarId: 'primary',
         resource: event
       });

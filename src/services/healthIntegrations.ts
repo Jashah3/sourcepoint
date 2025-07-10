@@ -1,5 +1,7 @@
 
 // Health integrations service for Google Fit, Apple Health, and Fitbit
+import { GoogleAPIService } from './googleAPI';
+
 declare global {
   interface Window {
     gapi: any;
@@ -17,6 +19,7 @@ export interface HealthData {
 
 export class HealthIntegrations {
   private static instance: HealthIntegrations;
+  private googleAPI = GoogleAPIService.getInstance();
   
   public static getInstance(): HealthIntegrations {
     if (!HealthIntegrations.instance) {
@@ -28,24 +31,32 @@ export class HealthIntegrations {
   // Google Fit Integration
   async connectGoogleFit(): Promise<boolean> {
     try {
-      if (!window.gapi) {
-        await this.loadGoogleAPI();
-      }
+      // Get API credentials from localStorage
+      const apiKey = localStorage.getItem('google_api_key');
+      const clientId = localStorage.getItem('google_client_id');
       
-      await window.gapi.load('auth2', () => {
-        window.gapi.auth2.init({
-          client_id: 'your-google-client-id.apps.googleusercontent.com'
-        });
-      });
+      if (!apiKey || !clientId) {
+        console.warn('Google API credentials not found. Please configure them in Settings.');
+        return false;
+      }
 
-      const authInstance = window.gapi.auth2.getAuthInstance();
-      const user = await authInstance.signIn({
+      // Initialize Google API for Fitness
+      const initialized = await this.googleAPI.initialize({
+        apiKey,
+        clientId,
+        discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/fitness/v1/rest'],
         scope: 'https://www.googleapis.com/auth/fitness.activity.read https://www.googleapis.com/auth/fitness.body.read'
       });
 
-      localStorage.setItem('googleFit_connected', 'true');
-      localStorage.setItem('googleFit_token', user.getAuthResponse().access_token);
-      return true;
+      if (!initialized) return false;
+
+      // Sign in
+      const success = await this.googleAPI.signIn();
+      if (success) {
+        localStorage.setItem('googleFit_connected', 'true');
+      }
+
+      return success;
     } catch (error) {
       console.error('Google Fit connection failed:', error);
       return false;

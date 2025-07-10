@@ -310,6 +310,69 @@ export const Settings = () => {
 
       <Card className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border-gray-200 dark:border-gray-700 hover:shadow-xl transition-all duration-300">
         <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-gray-800 dark:text-gray-200">
+            <Key className="h-5 w-5 text-gray-600" />
+            Google API Configuration
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="p-4 bg-red-50 dark:bg-red-900/20 rounded-lg">
+            <div className="flex items-center gap-2 mb-3">
+              <Key className="h-4 w-4 text-red-600" />
+              <span className="font-medium text-red-800 dark:text-red-200">Google API Key</span>
+            </div>
+            <Input
+              placeholder="Enter your Google API key"
+              type="password"
+              value={localStorage.getItem('google_api_key') || ''}
+              onChange={(e) => {
+                localStorage.setItem('google_api_key', e.target.value);
+                toast({
+                  title: "Google API Key Updated",
+                  description: "Google API key has been saved."
+                });
+              }}
+              className="bg-white/50 dark:bg-gray-700/50"
+            />
+            <p className="text-xs text-muted-foreground mt-2">Required for Google Calendar and Fit integration</p>
+          </div>
+
+          <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+            <div className="flex items-center gap-2 mb-3">
+              <Cpu className="h-4 w-4 text-blue-600" />
+              <span className="font-medium text-blue-800 dark:text-blue-200">Google Client ID</span>
+            </div>
+            <Input
+              placeholder="Enter your Google OAuth Client ID"
+              type="password"
+              value={localStorage.getItem('google_client_id') || ''}
+              onChange={(e) => {
+                localStorage.setItem('google_client_id', e.target.value);
+                toast({
+                  title: "Google Client ID Updated",
+                  description: "Google Client ID has been saved."
+                });
+              }}
+              className="bg-white/50 dark:bg-gray-700/50"
+            />
+            <p className="text-xs text-muted-foreground mt-2">OAuth Client ID for Google services authentication</p>
+          </div>
+
+          <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
+            <p className="text-sm text-yellow-800 dark:text-yellow-200">
+              <strong>Setup Instructions:</strong>
+              <br />1. Go to Google Cloud Console
+              <br />2. Create/select a project
+              <br />3. Enable Calendar API and Fitness API
+              <br />4. Create credentials (API Key + OAuth 2.0 Client ID)
+              <br />5. Add your domain to authorized origins
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border-gray-200 dark:border-gray-700 hover:shadow-xl transition-all duration-300">
+        <CardHeader>
           <CardTitle className="text-gray-800 dark:text-gray-200">Account Management</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">

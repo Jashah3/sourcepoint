@@ -9,6 +9,7 @@ import { MealPlanner } from "@/components/MealPlanner";
 import { WorkoutTracker } from "@/components/WorkoutTracker";
 import { SupplementTracker } from "@/components/SupplementTracker";
 import { EnhancedAICoach } from "@/components/EnhancedAICoach";
+import { EnhancedAIAssistant } from "@/components/EnhancedAIAssistant";
 import { Settings } from "@/components/Settings";
 import { CameraFoodRecognition } from "@/components/CameraFoodRecognition";
 import { EnhancedDashboardCards } from "@/components/EnhancedDashboardCards";
@@ -130,7 +131,10 @@ const Dashboard = () => {
             </TabsContent>
 
             <TabsContent value="coach">
-              <EnhancedAICoach />
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                <EnhancedAICoach />
+                <EnhancedAIAssistant />
+              </div>
             </TabsContent>
 
             <TabsContent value="profile">
