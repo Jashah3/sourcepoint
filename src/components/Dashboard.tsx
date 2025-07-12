@@ -18,6 +18,7 @@ import { AnimatedFoodBackground } from "@/components/AnimatedFoodBackground";
 import { HealthBadges } from "@/components/HealthBadges";
 import { DailySummary } from "@/components/DailySummary";
 import { ProfileDashboard } from "@/components/ProfileDashboard";
+import { DailyRoutineTracker } from "@/components/DailyRoutineTracker";
 import { HealthDataProvider } from "@/contexts/HealthDataContext";
 import { useTheme } from "./ThemeProvider";
 import { Activity, Award, Calendar, Heart, Settings as SettingsIcon, User, Moon, Sun, Zap } from "lucide-react";
@@ -77,7 +78,7 @@ const Dashboard = () => {
           <DailySummary />
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full mt-6">
-            <TabsList className="grid w-full grid-cols-8 mb-8 bg-white/30 dark:bg-gray-800/30 backdrop-blur-md border border-white/40 dark:border-gray-700/40 shadow-2xl rounded-2xl p-1">
+            <TabsList className="grid w-full grid-cols-9 mb-8 bg-white/30 dark:bg-gray-800/30 backdrop-blur-md border border-white/40 dark:border-gray-700/40 shadow-2xl rounded-2xl p-1">
               <TabsTrigger value="dashboard" className="flex items-center gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-600 data-[state=active]:to-teal-600 data-[state=active]:text-white transition-all duration-300 rounded-xl">
                 <Activity className="h-4 w-4" />
                 Dashboard
@@ -95,6 +96,9 @@ const Dashboard = () => {
               </TabsTrigger>
               <TabsTrigger value="supplements" className="flex items-center gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-600 data-[state=active]:to-teal-600 data-[state=active]:text-white transition-all duration-300 rounded-xl">
                 💊 Supplements
+              </TabsTrigger>
+              <TabsTrigger value="routine" className="flex items-center gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-600 data-[state=active]:to-teal-600 data-[state=active]:text-white transition-all duration-300 rounded-xl">
+                📋 Routine
               </TabsTrigger>
               <TabsTrigger value="coach" className="flex items-center gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-600 data-[state=active]:to-teal-600 data-[state=active]:text-white transition-all duration-300 rounded-xl">
                 🤖 AI Coach
@@ -128,6 +132,10 @@ const Dashboard = () => {
 
             <TabsContent value="supplements">
               <SupplementTracker />
+            </TabsContent>
+
+            <TabsContent value="routine">
+              <DailyRoutineTracker />
             </TabsContent>
 
             <TabsContent value="coach">
