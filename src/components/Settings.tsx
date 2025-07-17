@@ -10,17 +10,19 @@ import { useTheme } from "./ThemeProvider";
 import { HealthIntegrations } from "@/services/healthIntegrations";
 import { GoogleCalendarService } from "@/services/googleCalendar";
 import { toast } from "@/hooks/use-toast";
-import { CheckCircle, Circle, Smartphone, Watch, Calendar, Key, Bot, Cpu } from "lucide-react";
+import { CheckCircle, Circle, Smartphone, Watch, Calendar, Key, Bot, Cpu, Shield, AlertTriangle } from "lucide-react";
+import { SecureStorage, validateApiKey } from "@/utils/securityUtils";
 
 export const Settings = () => {
   const { theme, setTheme } = useTheme();
   const [connecting, setConnecting] = useState<string | null>(null);
   const [apiKeys, setApiKeys] = useState({
-    openai: localStorage.getItem('openai_api_key') || '',
-    anthropic: localStorage.getItem('anthropic_api_key') || '',
-    perplexity: localStorage.getItem('perplexity_api_key') || '',
-    elevenlabs: localStorage.getItem('elevenlabs_api_key') || ''
+    openai: SecureStorage.getApiKey('openai') || '',
+    anthropic: SecureStorage.getApiKey('anthropic') || '',
+    perplexity: SecureStorage.getApiKey('perplexity') || '',
+    elevenlabs: SecureStorage.getApiKey('elevenlabs') || ''
   });
+  const [apiKeyErrors, setApiKeyErrors] = useState<Record<string, string>>({});
   const healthService = HealthIntegrations.getInstance();
   const calendarService = GoogleCalendarService.getInstance();
 
@@ -75,15 +77,37 @@ export const Settings = () => {
 
   const handleApiKeyChange = (service: string, value: string) => {
     setApiKeys(prev => ({ ...prev, [service]: value }));
-    localStorage.setItem(`${service}_api_key`, value);
+    
+    // Clear previous error
+    setApiKeyErrors(prev => ({ ...prev, [service]: '' }));
+    
+    if (value.trim() === '') {
+      SecureStorage.setApiKey(service, '');
+      toast({
+        title: "API Key Removed",
+        description: `${service.charAt(0).toUpperCase() + service.slice(1)} API key has been removed.`
+      });
+      return;
+    }
+    
+    // Validate API key format
+    const validation = validateApiKey(service, value);
+    if (!validation.isValid) {
+      setApiKeyErrors(prev => ({ ...prev, [service]: validation.error || 'Invalid API key format' }));
+      return;
+    }
+    
+    // Store securely
+    SecureStorage.setApiKey(service, value);
     toast({
       title: "API Key Updated",
-      description: `${service.charAt(0).toUpperCase() + service.slice(1)} API key has been saved.`
+      description: `${service.charAt(0).toUpperCase() + service.slice(1)} API key has been saved securely.`
     });
   };
 
   const clearAllData = () => {
     if (confirm('Are you sure you want to clear all data? This action cannot be undone.')) {
+      SecureStorage.clearAllApiKeys();
       localStorage.clear();
       window.location.reload();
     }
@@ -241,9 +265,15 @@ export const Settings = () => {
       <Card className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border-gray-200 dark:border-gray-700 hover:shadow-xl transition-all duration-300">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-gray-800 dark:text-gray-200">
-            <Bot className="h-5 w-5 text-gray-600" />
+            <Shield className="h-5 w-5 text-gray-600" />
             AI Services Configuration
           </CardTitle>
+          <div className="flex items-center gap-2 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+            <Shield className="h-4 w-4 text-green-600" />
+            <p className="text-sm text-green-800 dark:text-green-200">
+              API keys are encrypted and stored securely in your browser
+            </p>
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
@@ -252,12 +282,18 @@ export const Settings = () => {
               <span className="font-medium text-blue-800 dark:text-blue-200">OpenAI API</span>
             </div>
             <Input
-              placeholder="Enter your OpenAI API key"
+              placeholder="Enter your OpenAI API key (sk-...)"
               type="password"
               value={apiKeys.openai}
               onChange={(e) => handleApiKeyChange('openai', e.target.value)}
-              className="bg-white/50 dark:bg-gray-700/50"
+              className={`bg-white/50 dark:bg-gray-700/50 ${apiKeyErrors.openai ? 'border-red-500' : ''}`}
             />
+            {apiKeyErrors.openai && (
+              <div className="flex items-center gap-2 mt-2">
+                <AlertTriangle className="h-4 w-4 text-red-500" />
+                <p className="text-xs text-red-500">{apiKeyErrors.openai}</p>
+              </div>
+            )}
             <p className="text-xs text-muted-foreground mt-2">Used for AI health coach responses</p>
           </div>
 
@@ -267,12 +303,18 @@ export const Settings = () => {
               <span className="font-medium text-purple-800 dark:text-purple-200">Anthropic API</span>
             </div>
             <Input
-              placeholder="Enter your Anthropic API key"
+              placeholder="Enter your Anthropic API key (sk-ant-...)"
               type="password"
               value={apiKeys.anthropic}
               onChange={(e) => handleApiKeyChange('anthropic', e.target.value)}
-              className="bg-white/50 dark:bg-gray-700/50"
+              className={`bg-white/50 dark:bg-gray-700/50 ${apiKeyErrors.anthropic ? 'border-red-500' : ''}`}
             />
+            {apiKeyErrors.anthropic && (
+              <div className="flex items-center gap-2 mt-2">
+                <AlertTriangle className="h-4 w-4 text-red-500" />
+                <p className="text-xs text-red-500">{apiKeyErrors.anthropic}</p>
+              </div>
+            )}
             <p className="text-xs text-muted-foreground mt-2">Alternative AI provider for enhanced responses</p>
           </div>
 
@@ -282,12 +324,18 @@ export const Settings = () => {
               <span className="font-medium text-green-800 dark:text-green-200">Perplexity API</span>
             </div>
             <Input
-              placeholder="Enter your Perplexity API key"
+              placeholder="Enter your Perplexity API key (pplx-...)"
               type="password"
               value={apiKeys.perplexity}
               onChange={(e) => handleApiKeyChange('perplexity', e.target.value)}
-              className="bg-white/50 dark:bg-gray-700/50"
+              className={`bg-white/50 dark:bg-gray-700/50 ${apiKeyErrors.perplexity ? 'border-red-500' : ''}`}
             />
+            {apiKeyErrors.perplexity && (
+              <div className="flex items-center gap-2 mt-2">
+                <AlertTriangle className="h-4 w-4 text-red-500" />
+                <p className="text-xs text-red-500">{apiKeyErrors.perplexity}</p>
+              </div>
+            )}
             <p className="text-xs text-muted-foreground mt-2">Real-time health research and information</p>
           </div>
 
@@ -297,12 +345,18 @@ export const Settings = () => {
               <span className="font-medium text-orange-800 dark:text-orange-200">ElevenLabs API</span>
             </div>
             <Input
-              placeholder="Enter your ElevenLabs API key"
+              placeholder="Enter your ElevenLabs API key (32 characters)"
               type="password"
               value={apiKeys.elevenlabs}
               onChange={(e) => handleApiKeyChange('elevenlabs', e.target.value)}
-              className="bg-white/50 dark:bg-gray-700/50"
+              className={`bg-white/50 dark:bg-gray-700/50 ${apiKeyErrors.elevenlabs ? 'border-red-500' : ''}`}
             />
+            {apiKeyErrors.elevenlabs && (
+              <div className="flex items-center gap-2 mt-2">
+                <AlertTriangle className="h-4 w-4 text-red-500" />
+                <p className="text-xs text-red-500">{apiKeyErrors.elevenlabs}</p>
+              </div>
+            )}
             <p className="text-xs text-muted-foreground mt-2">Voice assistant and text-to-speech functionality</p>
           </div>
         </CardContent>
@@ -324,12 +378,12 @@ export const Settings = () => {
             <Input
               placeholder="Enter your Google API key"
               type="password"
-              value={localStorage.getItem('google_api_key') || ''}
+              value={SecureStorage.getSensitiveData('google_api_key') || ''}
               onChange={(e) => {
-                localStorage.setItem('google_api_key', e.target.value);
+                SecureStorage.setSensitiveData('google_api_key', e.target.value);
                 toast({
                   title: "Google API Key Updated",
-                  description: "Google API key has been saved."
+                  description: "Google API key has been saved securely."
                 });
               }}
               className="bg-white/50 dark:bg-gray-700/50"
@@ -345,12 +399,12 @@ export const Settings = () => {
             <Input
               placeholder="Enter your Google OAuth Client ID"
               type="password"
-              value={localStorage.getItem('google_client_id') || ''}
+              value={SecureStorage.getSensitiveData('google_client_id') || ''}
               onChange={(e) => {
-                localStorage.setItem('google_client_id', e.target.value);
+                SecureStorage.setSensitiveData('google_client_id', e.target.value);
                 toast({
                   title: "Google Client ID Updated",
-                  description: "Google Client ID has been saved."
+                  description: "Google Client ID has been saved securely."
                 });
               }}
               className="bg-white/50 dark:bg-gray-700/50"

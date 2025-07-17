@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Mic, MicOff, Volume2, VolumeX } from "lucide-react";
 import { useTheme } from "./ThemeProvider";
 import { toast } from "@/hooks/use-toast";
+import { SecureStorage } from "@/utils/securityUtils";
 
 // Type declarations for Web Speech API
 declare global {
@@ -66,7 +67,7 @@ export const VoiceAssistant = () => {
       setResponse(apiResponse);
       
       // Text-to-speech response
-      const elevenLabsKey = localStorage.getItem('elevenlabs_api_key');
+      const elevenLabsKey = SecureStorage.getApiKey('elevenlabs');
       if (elevenLabsKey) {
         await speakWithElevenLabs(apiResponse, elevenLabsKey);
       } else {
@@ -81,8 +82,8 @@ export const VoiceAssistant = () => {
   };
 
   const generateAIResponse = async (input: string): Promise<string> => {
-    const openaiKey = localStorage.getItem('openai_api_key');
-    const anthropicKey = localStorage.getItem('anthropic_api_key');
+    const openaiKey = SecureStorage.getApiKey('openai');
+    const anthropicKey = SecureStorage.getApiKey('anthropic');
     
     if (openaiKey) {
       try {

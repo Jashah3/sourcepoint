@@ -1,7 +1,8 @@
 // Enhanced AI Service for multiple AI providers
+import { SecureStorage, validateApiKey, sanitizeInput, RateLimiter, getSecureHeaders } from '@/utils/securityUtils';
+
 export interface AIProvider {
   name: string;
-  apiKey: string;
   baseUrl?: string;
 }
 
@@ -19,6 +20,7 @@ export interface AIResponse {
     completionTokens: number;
     totalTokens: number;
   };
+  error?: string;
 }
 
 export class AIService {
@@ -33,33 +35,75 @@ export class AIService {
 
   async generateResponse(provider: string, request: AIRequest): Promise<AIResponse> {
     try {
+      // Rate limiting
+      if (!RateLimiter.checkRateLimit(`ai_${provider}`, 10, 60000)) {
+        return {
+          content: '',
+          error: 'Rate limit exceeded. Please wait before making more requests.'
+        };
+      }
+
+      // Input validation
+      const sanitizedMessage = sanitizeInput(request.message);
+      const sanitizedContext = request.context ? sanitizeInput(request.context) : undefined;
+
+      if (!sanitizedMessage) {
+        return {
+          content: '',
+          error: 'Invalid input provided.'
+        };
+      }
+
+      const sanitizedRequest = {
+        ...request,
+        message: sanitizedMessage,
+        context: sanitizedContext
+      };
+
       switch (provider.toLowerCase()) {
         case 'openai':
-          return await this.callOpenAI(request);
+          return await this.callOpenAI(sanitizedRequest);
         case 'anthropic':
-          return await this.callAnthropic(request);
+          return await this.callAnthropic(sanitizedRequest);
         case 'perplexity':
-          return await this.callPerplexity(request);
+          return await this.callPerplexity(sanitizedRequest);
         default:
-          throw new Error(`Unsupported AI provider: ${provider}`);
+          return {
+            content: '',
+            error: `Unsupported AI provider: ${provider}`
+          };
       }
     } catch (error) {
       console.error(`AI Service error for ${provider}:`, error);
-      throw error;
+      return {
+        content: '',
+        error: error instanceof Error ? error.message : 'An unexpected error occurred'
+      };
     }
   }
 
   private async callOpenAI(request: AIRequest): Promise<AIResponse> {
-    const apiKey = localStorage.getItem('openai_api_key');
+    const apiKey = SecureStorage.getApiKey('openai');
     if (!apiKey) {
-      throw new Error('OpenAI API key not found. Please configure it in Settings.');
+      return {
+        content: '',
+        error: 'OpenAI API key not found. Please configure it in Settings.'
+      };
+    }
+
+    const validation = validateApiKey('openai', apiKey);
+    if (!validation.isValid) {
+      return {
+        content: '',
+        error: validation.error || 'Invalid OpenAI API key'
+      };
     }
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
+        ...getSecureHeaders(),
         'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
       },
       body: JSON.stringify({
         model: 'gpt-4.1-2025-04-14',
@@ -79,31 +123,46 @@ export class AIService {
     });
 
     if (!response.ok) {
-      throw new Error(`OpenAI API error: ${response.statusText}`);
+      const errorText = await response.text();
+      return {
+        content: '',
+        error: `OpenAI API error: ${response.statusText}`
+      };
     }
 
     const data = await response.json();
     return {
-      content: data.choices[0].message.content,
+      content: data.choices?.[0]?.message?.content || '',
       usage: {
-        promptTokens: data.usage.prompt_tokens,
-        completionTokens: data.usage.completion_tokens,
-        totalTokens: data.usage.total_tokens,
+        promptTokens: data.usage?.prompt_tokens || 0,
+        completionTokens: data.usage?.completion_tokens || 0,
+        totalTokens: data.usage?.total_tokens || 0,
       },
     };
   }
 
   private async callAnthropic(request: AIRequest): Promise<AIResponse> {
-    const apiKey = localStorage.getItem('anthropic_api_key');
+    const apiKey = SecureStorage.getApiKey('anthropic');
     if (!apiKey) {
-      throw new Error('Anthropic API key not found. Please configure it in Settings.');
+      return {
+        content: '',
+        error: 'Anthropic API key not found. Please configure it in Settings.'
+      };
+    }
+
+    const validation = validateApiKey('anthropic', apiKey);
+    if (!validation.isValid) {
+      return {
+        content: '',
+        error: validation.error || 'Invalid Anthropic API key'
+      };
     }
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
+        ...getSecureHeaders(),
         'x-api-key': apiKey,
-        'Content-Type': 'application/json',
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
@@ -121,31 +180,45 @@ export class AIService {
     });
 
     if (!response.ok) {
-      throw new Error(`Anthropic API error: ${response.statusText}`);
+      return {
+        content: '',
+        error: `Anthropic API error: ${response.statusText}`
+      };
     }
 
     const data = await response.json();
     return {
-      content: data.content[0].text,
+      content: data.content?.[0]?.text || '',
       usage: {
-        promptTokens: data.usage.input_tokens,
-        completionTokens: data.usage.output_tokens,
-        totalTokens: data.usage.input_tokens + data.usage.output_tokens,
+        promptTokens: data.usage?.input_tokens || 0,
+        completionTokens: data.usage?.output_tokens || 0,
+        totalTokens: (data.usage?.input_tokens || 0) + (data.usage?.output_tokens || 0),
       },
     };
   }
 
   private async callPerplexity(request: AIRequest): Promise<AIResponse> {
-    const apiKey = localStorage.getItem('perplexity_api_key');
+    const apiKey = SecureStorage.getApiKey('perplexity');
     if (!apiKey) {
-      throw new Error('Perplexity API key not found. Please configure it in Settings.');
+      return {
+        content: '',
+        error: 'Perplexity API key not found. Please configure it in Settings.'
+      };
+    }
+
+    const validation = validateApiKey('perplexity', apiKey);
+    if (!validation.isValid) {
+      return {
+        content: '',
+        error: validation.error || 'Invalid Perplexity API key'
+      };
     }
 
     const response = await fetch('https://api.perplexity.ai/chat/completions', {
       method: 'POST',
       headers: {
+        ...getSecureHeaders(),
         'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
       },
       body: JSON.stringify({
         model: 'llama-3.1-sonar-small-128k-online',
@@ -172,16 +245,19 @@ export class AIService {
     });
 
     if (!response.ok) {
-      throw new Error(`Perplexity API error: ${response.statusText}`);
+      return {
+        content: '',
+        error: `Perplexity API error: ${response.statusText}`
+      };
     }
 
     const data = await response.json();
     return {
-      content: data.choices[0].message.content,
+      content: data.choices?.[0]?.message?.content || '',
       usage: {
-        promptTokens: data.usage.prompt_tokens || 0,
-        completionTokens: data.usage.completion_tokens || 0,
-        totalTokens: (data.usage.prompt_tokens || 0) + (data.usage.completion_tokens || 0),
+        promptTokens: data.usage?.prompt_tokens || 0,
+        completionTokens: data.usage?.completion_tokens || 0,
+        totalTokens: (data.usage?.prompt_tokens || 0) + (data.usage?.completion_tokens || 0),
       },
     };
   }
@@ -218,9 +294,9 @@ export class AIService {
 
   getAvailableProviders(): string[] {
     const providers = [];
-    if (localStorage.getItem('openai_api_key')) providers.push('OpenAI');
-    if (localStorage.getItem('anthropic_api_key')) providers.push('Anthropic');
-    if (localStorage.getItem('perplexity_api_key')) providers.push('Perplexity');
+    if (SecureStorage.getApiKey('openai')) providers.push('OpenAI');
+    if (SecureStorage.getApiKey('anthropic')) providers.push('Anthropic');
+    if (SecureStorage.getApiKey('perplexity')) providers.push('Perplexity');
     return providers;
   }
 }
