@@ -1,10 +1,13 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
-import { Clock, Droplets, Dumbbell, Book, Utensils, Moon, Sun } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Clock, Droplets, Dumbbell, Book, Utensils, Moon, Sun, Calendar, RefreshCw, Bell } from "lucide-react";
+import { GoogleCalendarService } from "@/services/googleCalendar";
+import { toast } from "sonner";
 
 interface RoutineItem {
   id: string;
@@ -1219,6 +1222,14 @@ const getCategoryColor = (category: string) => {
 export const DailyRoutineTracker = () => {
   const [routineState, setRoutineState] = useState(routineData);
   const [selectedDay, setSelectedDay] = useState('monday');
+  const [calendarConnected, setCalendarConnected] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [googleCalendarService] = useState(() => GoogleCalendarService.getInstance());
+
+  useEffect(() => {
+    // Check if Google Calendar is already connected
+    setCalendarConnected(googleCalendarService.isConnected());
+  }, [googleCalendarService]);
 
   const toggleItemCompletion = (day: string, itemId: string) => {
     setRoutineState(prev => ({
@@ -1244,6 +1255,83 @@ export const DailyRoutineTracker = () => {
     { key: 'sunday', label: 'Sunday', description: 'Recovery + Reset' }
   ];
 
+  const connectToGoogleCalendar = async () => {
+    setSyncing(true);
+    try {
+      const success = await googleCalendarService.signIn();
+      if (success) {
+        setCalendarConnected(true);
+        toast.success("Successfully connected to Google Calendar!");
+      } else {
+        toast.error("Failed to connect to Google Calendar. Please check your settings.");
+      }
+    } catch (error) {
+      console.error("Google Calendar connection error:", error);
+      toast.error("Connection failed. Please try again.");
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  const syncRoutineToCalendar = async () => {
+    if (!calendarConnected) {
+      toast.error("Please connect to Google Calendar first");
+      return;
+    }
+
+    setSyncing(true);
+    try {
+      const today = new Date();
+      const currentDayItems = currentDayData;
+      let successCount = 0;
+
+      for (const item of currentDayItems) {
+        const [time, ampm] = item.time.split(' ');
+        const [hours, minutes] = time.split(':').map(Number);
+        let hour24 = hours;
+        
+        if (ampm === 'PM' && hours !== 12) hour24 += 12;
+        if (ampm === 'AM' && hours === 12) hour24 = 0;
+
+        const itemDateTime = new Date(today);
+        itemDateTime.setHours(hour24, minutes, 0, 0);
+
+        // Only create reminders for future items
+        if (itemDateTime > new Date()) {
+          let success = false;
+          
+          if (item.category === 'meal') {
+            success = await googleCalendarService.createMealReminder(item.title, itemDateTime);
+          } else if (item.category === 'workout' || item.category === 'movement') {
+            success = await googleCalendarService.createWorkoutReminder(item.title, itemDateTime);
+          } else {
+            // Create general reminder for other categories
+            success = await googleCalendarService.createMealReminder(
+              `${item.category.toUpperCase()}: ${item.title}`, 
+              itemDateTime
+            );
+          }
+          
+          if (success) successCount++;
+        }
+      }
+
+      // Create water reminders for the day
+      const waterSuccess = await googleCalendarService.createWaterReminder();
+      
+      if (successCount > 0 || waterSuccess) {
+        toast.success(`Successfully synced ${successCount} routine items and water reminders to Google Calendar!`);
+      } else {
+        toast.warning("No future items to sync today. Calendar reminders are for upcoming activities.");
+      }
+    } catch (error) {
+      console.error("Sync error:", error);
+      toast.error("Failed to sync with Google Calendar. Please try again.");
+    } finally {
+      setSyncing(false);
+    }
+  };
+
   return (
     <Card className="w-full bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border border-white/30 dark:border-gray-700/30 shadow-xl">
       <CardHeader className="space-y-4">
@@ -1257,12 +1345,71 @@ export const DailyRoutineTracker = () => {
           </Badge>
         </div>
         
-        <div className="space-y-2">
-          <div className="flex justify-between text-sm text-muted-foreground">
-            <span>Daily Progress</span>
-            <span>{Math.round(completionPercentage)}%</span>
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <div className="flex justify-between text-sm text-muted-foreground">
+              <span>Daily Progress</span>
+              <span>{Math.round(completionPercentage)}%</span>
+            </div>
+            <Progress value={completionPercentage} className="h-2" />
           </div>
-          <Progress value={completionPercentage} className="h-2" />
+          
+          {/* Google Calendar Integration Controls */}
+          <div className="flex items-center justify-between p-3 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 rounded-lg border border-emerald-200 dark:border-emerald-700">
+            <div className="flex items-center space-x-3">
+              <Calendar className="h-5 w-5 text-emerald-600" />
+              <div>
+                <p className="font-medium text-emerald-800 dark:text-emerald-200">Google Calendar Integration</p>
+                <p className="text-xs text-emerald-600 dark:text-emerald-300">
+                  {calendarConnected ? 'Connected - Sync your routine' : 'Connect to create automatic reminders'}
+                </p>
+              </div>
+            </div>
+            
+            <div className="flex items-center space-x-2">
+              {calendarConnected ? (
+                <Button
+                  onClick={syncRoutineToCalendar}
+                  disabled={syncing}
+                  variant="outline"
+                  size="sm"
+                  className="bg-emerald-600 text-white hover:bg-emerald-700 border-emerald-600"
+                >
+                  {syncing ? (
+                    <>
+                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                      Syncing...
+                    </>
+                  ) : (
+                    <>
+                      <Bell className="h-4 w-4 mr-2" />
+                      Sync Today
+                    </>
+                  )}
+                </Button>
+              ) : (
+                <Button
+                  onClick={connectToGoogleCalendar}
+                  disabled={syncing}
+                  variant="outline"
+                  size="sm"
+                  className="bg-emerald-600 text-white hover:bg-emerald-700 border-emerald-600"
+                >
+                  {syncing ? (
+                    <>
+                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                      Connecting...
+                    </>
+                  ) : (
+                    <>
+                      <Calendar className="h-4 w-4 mr-2" />
+                      Connect
+                    </>
+                  )}
+                </Button>
+              )}
+            </div>
+          </div>
         </div>
       </CardHeader>
 
