@@ -19,6 +19,7 @@ import { HealthBadges } from "@/components/HealthBadges";
 import { DailySummary } from "@/components/DailySummary";
 import { ProfileDashboard } from "@/components/ProfileDashboard";
 import { DailyRoutineTracker } from "@/components/DailyRoutineTracker";
+import Footer from "@/components/Footer";
 import { HealthDataProvider } from "@/contexts/HealthDataContext";
 import { useTheme } from "./ThemeProvider";
 import { Activity, Award, Calendar, Heart, Settings as SettingsIcon, User, Moon, Sun, Zap } from "lucide-react";
@@ -153,6 +154,8 @@ const Dashboard = () => {
               <Settings />
             </TabsContent>
           </Tabs>
+          
+          <Footer />
         </div>
       </div>
     </HealthDataProvider>
