@@ -1,5 +1,6 @@
 // Enhanced AI Service for multiple AI providers
 import { SecureStorage, validateApiKey, sanitizeInput, RateLimiter, getSecureHeaders } from '@/utils/securityUtils';
+import { APISecurityManager, HealthDataSecurity } from '@/utils/enhancedSecurityUtils';
 
 export interface AIProvider {
   name: string;
@@ -35,44 +36,56 @@ export class AIService {
 
   async generateResponse(provider: string, request: AIRequest): Promise<AIResponse> {
     try {
-      // Rate limiting
-      if (!RateLimiter.checkRateLimit(`ai_${provider}`, 10, 60000)) {
+      // Enhanced security checks
+      if (!APISecurityManager.canMakeAPICall(provider)) {
         return {
           content: '',
-          error: 'Rate limit exceeded. Please wait before making more requests.'
+          error: 'API rate limit exceeded. Please try again later.'
         };
       }
 
-      // Input validation
-      const sanitizedMessage = sanitizeInput(request.message);
-      const sanitizedContext = request.context ? sanitizeInput(request.context) : undefined;
+      // Enhanced input sanitization
+      const sanitizedRequest = APISecurityManager.sanitizeAPIRequest({
+        ...request,
+        message: sanitizeInput(request.message),
+        context: request.context ? sanitizeInput(request.context) : undefined
+      });
 
-      if (!sanitizedMessage) {
+      if (!sanitizedRequest.message) {
         return {
           content: '',
           error: 'Invalid input provided.'
         };
       }
 
-      const sanitizedRequest = {
-        ...request,
-        message: sanitizedMessage,
-        context: sanitizedContext
-      };
-
+      // Select provider and make API call
+      let response: AIResponse;
       switch (provider.toLowerCase()) {
         case 'openai':
-          return await this.callOpenAI(sanitizedRequest);
+          response = await this.callOpenAI(sanitizedRequest);
+          break;
         case 'anthropic':
-          return await this.callAnthropic(sanitizedRequest);
+          response = await this.callAnthropic(sanitizedRequest);
+          break;
         case 'perplexity':
-          return await this.callPerplexity(sanitizedRequest);
+          response = await this.callPerplexity(sanitizedRequest);
+          break;
         default:
           return {
             content: '',
             error: `Unsupported AI provider: ${provider}`
           };
       }
+
+      // Validate response for security
+      if (response.content && !APISecurityManager.validateAPIResponse(response)) {
+        return {
+          content: '',
+          error: 'Invalid response detected'
+        };
+      }
+
+      return response;
     } catch (error) {
       console.error(`AI Service error for ${provider}:`, error);
       return {
@@ -263,33 +276,35 @@ export class AIService {
   }
 
   getHealthContext(userData?: any): string {
-    const healthData = localStorage.getItem('health_data');
-    const userGoals = localStorage.getItem('user_goals');
-    
-    let context = 'Current user health context:\n';
-    
-    if (healthData) {
-      try {
-        const data = JSON.parse(healthData);
-        context += `- Steps today: ${data.steps || 'N/A'}\n`;
-        context += `- Calories burned: ${data.calories || 'N/A'}\n`;
-        if (data.heartRate) context += `- Heart rate: ${data.heartRate} bpm\n`;
-        if (data.weight) context += `- Weight: ${data.weight} kg\n`;
-      } catch (error) {
-        console.error('Error parsing health data:', error);
+    try {
+      // Get stored health data securely
+      const healthData = HealthDataSecurity.getHealthData('metrics');
+      const userGoals = HealthDataSecurity.getHealthData('goals');
+      
+      let context = "User's Health Context:\n";
+      
+      if (healthData) {
+        context += `- Steps today: ${healthData.steps || 'N/A'}\n`;
+        context += `- Calories burned: ${healthData.calories || 'N/A'}\n`;
+        if (healthData.heartRate) context += `- Heart rate: ${healthData.heartRate} bpm\n`;
+        if (healthData.weight) context += `- Weight: ${healthData.weight} kg\n`;
       }
-    }
-    
-    if (userGoals) {
-      try {
-        const goals = JSON.parse(userGoals);
-        context += `- Health goals: ${goals.join(', ')}\n`;
-      } catch (error) {
-        console.error('Error parsing user goals:', error);
+      
+      if (userGoals && Array.isArray(userGoals)) {
+        context += `- Health goals: ${userGoals.join(', ')}\n`;
       }
+      
+      if (userData) {
+        // Sanitize additional user data
+        const sanitizedUserData = APISecurityManager.sanitizeAPIRequest(userData);
+        context += `Additional context: ${JSON.stringify(sanitizedUserData)}\n`;
+      }
+      
+      return context;
+    } catch (error) {
+      console.error('Error getting health context:', error);
+      return "Health context unavailable";
     }
-    
-    return context;
   }
 
   getAvailableProviders(): string[] {

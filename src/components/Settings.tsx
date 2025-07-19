@@ -12,6 +12,7 @@ import { GoogleCalendarService } from "@/services/googleCalendar";
 import { toast } from "@/hooks/use-toast";
 import { CheckCircle, Circle, Smartphone, Watch, Calendar, Key, Bot, Cpu, Shield, AlertTriangle } from "lucide-react";
 import { SecureStorage, validateApiKey } from "@/utils/securityUtils";
+import { SecurityDashboard } from "./SecurityDashboard";
 
 export const Settings = () => {
   const { theme, setTheme } = useTheme();
@@ -115,6 +116,7 @@ export const Settings = () => {
 
   return (
     <div className="space-y-8 animate-fade-in">
+      <SecurityDashboard />
       <Card className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border-gray-200 dark:border-gray-700 hover:shadow-xl transition-all duration-300">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-gray-800 dark:text-gray-200">
