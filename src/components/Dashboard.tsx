@@ -20,6 +20,7 @@ import { DailySummary } from "@/components/DailySummary";
 import { ProfileDashboard } from "@/components/ProfileDashboard";
 import { DailyRoutineTracker } from "@/components/DailyRoutineTracker";
 import Footer from "@/components/Footer";
+import AppNavigation from "@/components/AppNavigation";
 import { HealthDataProvider } from "@/contexts/HealthDataContext";
 import { useTheme } from "./ThemeProvider";
 import { Activity, Award, Calendar, Heart, Settings as SettingsIcon, User, Moon, Sun, Zap } from "lucide-react";
@@ -33,6 +34,8 @@ const Dashboard = () => {
       <div className="min-h-screen relative">
         <DynamicBackground />
         <AnimatedFoodBackground />
+        
+        <AppNavigation />
         
         <div className="relative z-10 container mx-auto p-4 max-w-7xl">
           <header className="flex justify-between items-center mb-8 bg-white/20 dark:bg-gray-800/20 backdrop-blur-md rounded-2xl p-4 shadow-lg border border-white/30 dark:border-gray-700/30">

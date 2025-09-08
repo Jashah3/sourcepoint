@@ -6,17 +6,29 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import Dashboard from "@/components/Dashboard";
 import Onboarding from "@/components/Onboarding";
 import { VoiceAssistant } from "@/components/VoiceAssistant";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Index = () => {
+  const { user, profile, updateProfile } = useAuth();
   const [isOnboarded, setIsOnboarded] = useState(false);
 
   useEffect(() => {
-    const onboardingStatus = localStorage.getItem('sourcePoint_onboarded');
-    setIsOnboarded(onboardingStatus === 'true');
-  }, []);
+    // Check both localStorage and profile for onboarding status
+    const localOnboardingStatus = localStorage.getItem('sourcePoint_onboarded');
+    const profileOnboardingStatus = profile?.onboarding_completed;
+    
+    const isCompleted = localOnboardingStatus === 'true' || profileOnboardingStatus === true;
+    setIsOnboarded(isCompleted);
+  }, [profile]);
 
-  const handleOnboardingComplete = () => {
+  const handleOnboardingComplete = async () => {
     localStorage.setItem('sourcePoint_onboarded', 'true');
+    
+    // Update profile in database
+    if (user) {
+      await updateProfile({ onboarding_completed: true });
+    }
+    
     setIsOnboarded(true);
   };
 
