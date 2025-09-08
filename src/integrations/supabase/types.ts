@@ -29,6 +29,111 @@ export type Database = {
         }
         Relationships: []
       }
+      health_data: {
+        Row: {
+          created_at: string
+          data_type: string
+          data_value: Json
+          id: string
+          recorded_at: string
+          source_service: string
+          synced_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          data_type: string
+          data_value: Json
+          id?: string
+          recorded_at: string
+          source_service: string
+          synced_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          data_type?: string
+          data_value?: Json
+          id?: string
+          recorded_at?: string
+          source_service?: string
+          synced_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      health_integrations: {
+        Row: {
+          access_token_encrypted: string | null
+          created_at: string
+          id: string
+          is_connected: boolean | null
+          last_sync_at: string | null
+          refresh_token_encrypted: string | null
+          service_name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          access_token_encrypted?: string | null
+          created_at?: string
+          id?: string
+          is_connected?: boolean | null
+          last_sync_at?: string | null
+          refresh_token_encrypted?: string | null
+          service_name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          access_token_encrypted?: string | null
+          created_at?: string
+          id?: string
+          is_connected?: boolean | null
+          last_sync_at?: string | null
+          refresh_token_encrypted?: string | null
+          service_name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          display_name: string | null
+          email: string | null
+          health_goals: Json | null
+          id: string
+          onboarding_completed: boolean | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          email?: string | null
+          health_goals?: Json | null
+          id?: string
+          onboarding_completed?: boolean | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          email?: string | null
+          health_goals?: Json | null
+          id?: string
+          onboarding_completed?: boolean | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
