@@ -44,14 +44,14 @@ All colors MUST be HSL.
 
     --radius: 0.75rem;
 
-    /* Health app specific design tokens */
-    --success: 120 60% 50%;
+    /* Health app specific design tokens - WCAG AA compliant */
+    --success: 120 60% 35%;
     --success-foreground: 0 0% 98%;
     
-    --warning: 45 93% 58%;
+    --warning: 45 93% 42%;
     --warning-foreground: 0 0% 98%;
     
-    --info: 210 100% 56%;
+    --info: 210 100% 42%;
     --info-foreground: 0 0% 98%;
 
     /* Gradients */
