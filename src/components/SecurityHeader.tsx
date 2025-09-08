@@ -9,10 +9,9 @@ export const SecurityHeader: React.FC = () => {
     // Initialize session security
     SessionSecurity.initializeSessionSecurity();
     
-    // Apply additional security headers via meta tags
+    // Apply additional security headers via meta tags (excluding those that require HTTP headers)
     const securityHeaders = [
       { name: 'X-Content-Type-Options', content: 'nosniff' },
-      { name: 'X-Frame-Options', content: 'DENY' },
       { name: 'X-XSS-Protection', content: '1; mode=block' },
       { name: 'Referrer-Policy', content: 'strict-origin-when-cross-origin' },
       { name: 'Permissions-Policy', content: 'geolocation=(), microphone=(), camera=()' }
