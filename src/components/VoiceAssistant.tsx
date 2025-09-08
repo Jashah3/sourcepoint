@@ -266,6 +266,7 @@ export const VoiceAssistant = () => {
       <Button
         onClick={toggleListening}
         size="icon"
+        aria-label={isListening ? "Stop voice recording" : "Start voice assistant"}
         className={`h-14 w-14 rounded-full shadow-lg transition-all duration-300 transform hover:scale-105 ${
           isListening 
             ? 'bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 animate-pulse' 

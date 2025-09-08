@@ -88,7 +88,7 @@ const Onboarding = ({ onComplete }: OnboardingProps) => {
                   <div>
                     <Label htmlFor="gender">Gender</Label>
                     <Select onValueChange={(value) => handleInputChange('gender', value)}>
-                      <SelectTrigger>
+                      <SelectTrigger aria-label="Select gender">
                         <SelectValue placeholder="Select gender" />
                       </SelectTrigger>
                       <SelectContent>
