@@ -104,29 +104,50 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signUp = async (email: string, password: string, displayName?: string) => {
     try {
+      console.log('Starting signup process for:', email);
       const redirectUrl = `${window.location.origin}/`;
       
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           emailRedirectTo: redirectUrl,
           data: {
             display_name: displayName,
-            full_name: displayName
+            full_name: displayName,
+            name: displayName
           }
         }
       });
 
       if (error) {
-        toast.error(error.message);
+        console.error('Signup error:', error);
+        
+        // Provide more specific error messages
+        if (error.message.includes('User already registered')) {
+          toast.error('An account with this email already exists. Please sign in instead.');
+        } else if (error.message.includes('Password')) {
+          toast.error('Password must be at least 6 characters long.');
+        } else if (error.message.includes('Email')) {
+          toast.error('Please enter a valid email address.');
+        } else {
+          toast.error(error.message || 'Signup failed. Please try again.');
+        }
         return { error };
       }
 
-      toast.success('Check your email to confirm your account!');
+      console.log('Signup successful, user data:', data);
+      
+      if (data.user && !data.user.email_confirmed_at) {
+        toast.success('Account created! Check your email to confirm your account.');
+      } else {
+        toast.success('Account created successfully!');
+      }
+      
       return { error: null };
     } catch (error: any) {
-      toast.error('Signup failed');
+      console.error('Signup exception:', error);
+      toast.error('Signup failed. Please check your connection and try again.');
       return { error };
     }
   };
