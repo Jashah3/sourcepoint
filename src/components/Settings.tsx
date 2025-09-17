@@ -17,6 +17,16 @@ import { SecurityDashboard } from "./SecurityDashboard";
 export const Settings = () => {
   const { theme, setTheme } = useTheme();
   const [connecting, setConnecting] = useState<string | null>(null);
+  const [apiKeys, setApiKeys] = useState({
+    openai: '',
+    anthropic: '',
+    perplexity: '',
+    elevenlabs: ''
+  });
+  const [googleApiKey, setGoogleApiKey] = useState('');
+  const [googleClientId, setGoogleClientId] = useState('');
+  const [apiKeyErrors, setApiKeyErrors] = useState<Record<string, string>>({});
+
   useEffect(() => {
     const loadApiKeys = async () => {
       const keys = {
@@ -26,10 +36,14 @@ export const Settings = () => {
         elevenlabs: await SecureStorage.getApiKey('elevenlabs') || ''
       };
       setApiKeys(keys);
+      
+      const googleKey = await SecureStorage.getSensitiveData('google_api_key') || '';
+      const googleClient = await SecureStorage.getSensitiveData('google_client_id') || '';
+      setGoogleApiKey(googleKey);
+      setGoogleClientId(googleClient);
     };
     loadApiKeys();
   }, []);
-  const [apiKeyErrors, setApiKeyErrors] = useState<Record<string, string>>({});
   const healthService = HealthIntegrations.getInstance();
   const calendarService = GoogleCalendarService.getInstance();
 
@@ -400,7 +414,6 @@ export const Settings = () => {
             />
             <p className="text-xs text-muted-foreground mt-2">Required for Google Calendar and Fit integration</p>
           </div>
-        </CardContent>
 
           <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
             <div className="flex items-center gap-2 mb-3">

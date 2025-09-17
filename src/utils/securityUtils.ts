@@ -2,8 +2,6 @@
 // DEPRECATED: Client-side encryption methods removed for security reasons
 // Use SupabaseSecureStorage instead for secure server-side storage
 
-import { SupabaseSecureStorage } from './supabaseSecureStorage';
-
 // Legacy SecureStorage class - deprecated, use TempSecureStorage instead
 import { TempSecureStorage } from './tempSecureStorage';
 
