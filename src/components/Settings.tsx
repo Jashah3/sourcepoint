@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -17,12 +17,18 @@ import { SecurityDashboard } from "./SecurityDashboard";
 export const Settings = () => {
   const { theme, setTheme } = useTheme();
   const [connecting, setConnecting] = useState<string | null>(null);
-  const [apiKeys, setApiKeys] = useState({
-    openai: SecureStorage.getApiKey('openai') || '',
-    anthropic: SecureStorage.getApiKey('anthropic') || '',
-    perplexity: SecureStorage.getApiKey('perplexity') || '',
-    elevenlabs: SecureStorage.getApiKey('elevenlabs') || ''
-  });
+  useEffect(() => {
+    const loadApiKeys = async () => {
+      const keys = {
+        openai: await SecureStorage.getApiKey('openai') || '',
+        anthropic: await SecureStorage.getApiKey('anthropic') || '',
+        perplexity: await SecureStorage.getApiKey('perplexity') || '',
+        elevenlabs: await SecureStorage.getApiKey('elevenlabs') || ''
+      };
+      setApiKeys(keys);
+    };
+    loadApiKeys();
+  }, []);
   const [apiKeyErrors, setApiKeyErrors] = useState<Record<string, string>>({});
   const healthService = HealthIntegrations.getInstance();
   const calendarService = GoogleCalendarService.getInstance();
@@ -76,14 +82,14 @@ export const Settings = () => {
     window.location.reload();
   };
 
-  const handleApiKeyChange = (service: string, value: string) => {
+  const handleApiKeyChange = async (service: string, value: string) => {
     setApiKeys(prev => ({ ...prev, [service]: value }));
     
     // Clear previous error
     setApiKeyErrors(prev => ({ ...prev, [service]: '' }));
     
     if (value.trim() === '') {
-      SecureStorage.setApiKey(service, '');
+      await SecureStorage.setApiKey(service, '');
       toast({
         title: "API Key Removed",
         description: `${service.charAt(0).toUpperCase() + service.slice(1)} API key has been removed.`
@@ -99,16 +105,16 @@ export const Settings = () => {
     }
     
     // Store securely
-    SecureStorage.setApiKey(service, value);
+    await SecureStorage.setApiKey(service, value);
     toast({
       title: "API Key Updated",
       description: `${service.charAt(0).toUpperCase() + service.slice(1)} API key has been saved securely.`
     });
   };
 
-  const clearAllData = () => {
+  const clearAllData = async () => {
     if (confirm('Are you sure you want to clear all data? This action cannot be undone.')) {
-      SecureStorage.clearAllApiKeys();
+      await SecureStorage.clearAllApiKeys();
       localStorage.clear();
       window.location.reload();
     }
@@ -380,9 +386,11 @@ export const Settings = () => {
             <Input
               placeholder="Enter your Google API key"
               type="password"
-              value={SecureStorage.getSensitiveData('google_api_key') || ''}
-              onChange={(e) => {
-                SecureStorage.setSensitiveData('google_api_key', e.target.value);
+              value={googleApiKey}
+              onChange={async (e) => {
+                const value = e.target.value;
+                setGoogleApiKey(value);
+                await SecureStorage.setSensitiveData('google_api_key', value);
                 toast({
                   title: "Google API Key Updated",
                   description: "Google API key has been saved securely."
@@ -392,6 +400,7 @@ export const Settings = () => {
             />
             <p className="text-xs text-muted-foreground mt-2">Required for Google Calendar and Fit integration</p>
           </div>
+        </CardContent>
 
           <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
             <div className="flex items-center gap-2 mb-3">
@@ -401,9 +410,11 @@ export const Settings = () => {
             <Input
               placeholder="Enter your Google OAuth Client ID"
               type="password"
-              value={SecureStorage.getSensitiveData('google_client_id') || ''}
-              onChange={(e) => {
-                SecureStorage.setSensitiveData('google_client_id', e.target.value);
+              value={googleClientId}
+              onChange={async (e) => {
+                const value = e.target.value;
+                setGoogleClientId(value);
+                await SecureStorage.setSensitiveData('google_client_id', value);
                 toast({
                   title: "Google Client ID Updated",
                   description: "Google Client ID has been saved securely."

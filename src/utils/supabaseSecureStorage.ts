@@ -5,7 +5,7 @@ export interface SecureStorageItem {
   id?: string;
   user_id: string;
   key_name: string;
-  encrypted_value: text;
+  encrypted_value: string;
   created_at?: string;
   updated_at?: string;
 }

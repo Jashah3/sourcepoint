@@ -4,31 +4,28 @@
 
 import { SupabaseSecureStorage } from './supabaseSecureStorage';
 
-// Legacy SecureStorage class - deprecated, use SupabaseSecureStorage instead
+// Legacy SecureStorage class - deprecated, use TempSecureStorage instead
+import { TempSecureStorage } from './tempSecureStorage';
+
 export class SecureStorage {
   static async setApiKey(provider: string, apiKey: string): Promise<void> {
-    console.warn('SecureStorage is deprecated. Use SupabaseSecureStorage instead.');
-    await SupabaseSecureStorage.setApiKey(provider, apiKey);
+    await TempSecureStorage.setApiKey(provider, apiKey);
   }
 
   static async getApiKey(provider: string): Promise<string | null> {
-    console.warn('SecureStorage is deprecated. Use SupabaseSecureStorage instead.');
-    return await SupabaseSecureStorage.getApiKey(provider);
+    return await TempSecureStorage.getApiKey(provider);
   }
 
   static async setSensitiveData(key: string, data: string): Promise<void> {
-    console.warn('SecureStorage is deprecated. Use SupabaseSecureStorage instead.');
-    await SupabaseSecureStorage.setSensitiveData(key, data);
+    await TempSecureStorage.setSensitiveData(key, data);
   }
 
   static async getSensitiveData(key: string): Promise<string | null> {
-    console.warn('SecureStorage is deprecated. Use SupabaseSecureStorage instead.');
-    return await SupabaseSecureStorage.getSensitiveData(key);
+    return await TempSecureStorage.getSensitiveData(key);
   }
 
   static async clearAllApiKeys(): Promise<void> {
-    console.warn('SecureStorage is deprecated. Use SupabaseSecureStorage instead.');
-    await SupabaseSecureStorage.clearAllData();
+    await TempSecureStorage.clearAllData();
   }
 }
 

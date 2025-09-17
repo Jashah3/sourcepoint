@@ -48,8 +48,8 @@ export class GoogleCalendarService {
   async initialize(): Promise<boolean> {
     try {
       // Get API credentials from secure storage
-      const apiKey = SecureStorage.getSensitiveData('google_api_key');
-      const clientId = SecureStorage.getSensitiveData('google_client_id');
+      const apiKey = await SecureStorage.getSensitiveData('google_api_key');
+      const clientId = await SecureStorage.getSensitiveData('google_client_id');
       
       if (!apiKey || !clientId) {
         console.warn('Google API credentials not found. Please configure them in Settings.');

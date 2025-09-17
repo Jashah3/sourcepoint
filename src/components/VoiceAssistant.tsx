@@ -67,7 +67,7 @@ export const VoiceAssistant = () => {
       setResponse(apiResponse);
       
       // Text-to-speech response
-      const elevenLabsKey = SecureStorage.getApiKey('elevenlabs');
+      const elevenLabsKey = await SecureStorage.getApiKey('elevenlabs');
       if (elevenLabsKey) {
         await speakWithElevenLabs(apiResponse, elevenLabsKey);
       } else {
@@ -82,8 +82,8 @@ export const VoiceAssistant = () => {
   };
 
   const generateAIResponse = async (input: string): Promise<string> => {
-    const openaiKey = SecureStorage.getApiKey('openai');
-    const anthropicKey = SecureStorage.getApiKey('anthropic');
+    const openaiKey = await SecureStorage.getApiKey('openai');
+    const anthropicKey = await SecureStorage.getApiKey('anthropic');
     
     if (openaiKey) {
       try {

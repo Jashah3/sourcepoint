@@ -32,13 +32,13 @@ export const SecurityProvider: React.FC<SecurityProviderProps> = ({ children }) 
   const [isEncryptionEnabled, setIsEncryptionEnabled] = useState(true);
   const [lastSecurityCheck, setLastSecurityCheck] = useState(Date.now());
 
-  const performSecurityCheck = () => {
+  const performSecurityCheck = async () => {
     try {
       // Check for unsecured API keys
       const hasUnsecuredKeys = checkForUnsecuredApiKeys();
       
       // Check encryption status
-      const encryptionStatus = checkEncryptionStatus();
+      const encryptionStatus = await checkEncryptionStatus();
       
       // Check for security vulnerabilities
       const vulnerabilities = checkSecurityVulnerabilities();
@@ -57,7 +57,7 @@ export const SecurityProvider: React.FC<SecurityProviderProps> = ({ children }) 
       setLastSecurityCheck(Date.now());
       
       // Store security check result
-      SecureStorage.setSensitiveData('security_check_result', JSON.stringify({
+      await SecureStorage.setSensitiveData('security_check_result', JSON.stringify({
         level,
         timestamp: Date.now(),
         hasUnsecuredKeys,
@@ -83,13 +83,13 @@ export const SecurityProvider: React.FC<SecurityProviderProps> = ({ children }) 
     });
   };
 
-  const checkEncryptionStatus = (): boolean => {
+  const checkEncryptionStatus = async (): Promise<boolean> => {
     try {
       // Test encryption/decryption
       const testData = 'security_test';
-      SecureStorage.setSensitiveData('test_encryption', testData);
-      const retrieved = SecureStorage.getSensitiveData('test_encryption');
-      SecureStorage.setSensitiveData('test_encryption', ''); // Clean up
+      await SecureStorage.setSensitiveData('test_encryption', testData);
+      const retrieved = await SecureStorage.getSensitiveData('test_encryption');
+      await SecureStorage.setSensitiveData('test_encryption', ''); // Clean up
       return retrieved === testData;
     } catch {
       return false;
@@ -123,20 +123,20 @@ export const SecurityProvider: React.FC<SecurityProviderProps> = ({ children }) 
     return vulnerabilities;
   };
 
-  const upgradeSecurityLevel = () => {
+  const upgradeSecurityLevel = async () => {
     try {
       // Migrate any unsecured data
       const providers = ['openai', 'anthropic', 'perplexity', 'elevenlabs'];
-      providers.forEach(provider => {
+      for (const provider of providers) {
         const unsecuredKey = localStorage.getItem(`${provider}_api_key`);
         if (unsecuredKey) {
-          SecureStorage.setApiKey(provider, unsecuredKey);
+          await SecureStorage.setApiKey(provider, unsecuredKey);
           localStorage.removeItem(`${provider}_api_key`);
         }
-      });
+      }
       
       setIsSecurityAlertVisible(false);
-      performSecurityCheck();
+      await performSecurityCheck();
       
       toast({
         title: "Security Upgraded",
@@ -152,9 +152,9 @@ export const SecurityProvider: React.FC<SecurityProviderProps> = ({ children }) 
     }
   };
 
-  const clearSecurityData = () => {
+  const clearSecurityData = async () => {
     try {
-      SecureStorage.clearAllApiKeys();
+      await SecureStorage.clearAllApiKeys();
       localStorage.removeItem('security_check_result');
       setSecurityLevel('medium');
       setLastSecurityCheck(Date.now());

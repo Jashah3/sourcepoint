@@ -29,16 +29,16 @@ export class HealthDataSecurity {
   }
   
   // Retrieve and verify health data
-  static getHealthData(key: string): any | null {
+  static async getHealthData(key: string): Promise<any | null> {
     try {
-      const storedData = SecureStorage.getSensitiveData(`${this.HEALTH_DATA_PREFIX}${key}`);
+      const storedData = await SecureStorage.getSensitiveData(`${this.HEALTH_DATA_PREFIX}${key}`);
       if (!storedData) return null;
       
       const metadata = JSON.parse(storedData);
       
       // Check expiration
       if (Date.now() > metadata.expiration) {
-        this.removeHealthData(key);
+        await this.removeHealthData(key);
         return null;
       }
       
@@ -47,7 +47,7 @@ export class HealthDataSecurity {
       // Verify data integrity
       if (this.generateChecksum(data) !== metadata.checksum) {
         console.warn('Health data integrity check failed');
-        this.removeHealthData(key);
+        await this.removeHealthData(key);
         return null;
       }
       
@@ -59,8 +59,8 @@ export class HealthDataSecurity {
   }
   
   // Remove health data
-  static removeHealthData(key: string): void {
-    SecureStorage.setSensitiveData(`${this.HEALTH_DATA_PREFIX}${key}`, '');
+  static async removeHealthData(key: string): Promise<void> {
+    await SecureStorage.setSensitiveData(`${this.HEALTH_DATA_PREFIX}${key}`, '');
   }
   
   // Generate checksum for data integrity
@@ -76,28 +76,28 @@ export class HealthDataSecurity {
   }
   
   // Clean expired health data
-  static cleanExpiredData(): number {
+  static async cleanExpiredData(): Promise<number> {
     let cleaned = 0;
     const keys = Object.keys(localStorage);
     
-    keys.forEach(key => {
+    for (const key of keys) {
       if (key.includes(`${this.HEALTH_DATA_PREFIX}`)) {
         try {
-          const storedData = SecureStorage.getSensitiveData(key.replace('encrypted_', ''));
+          const storedData = await SecureStorage.getSensitiveData(key.replace('encrypted_', ''));
           if (storedData) {
             const metadata = JSON.parse(storedData);
             if (Date.now() > metadata.expiration) {
-              SecureStorage.setSensitiveData(key.replace('encrypted_', ''), '');
+              await SecureStorage.setSensitiveData(key.replace('encrypted_', ''), '');
               cleaned++;
             }
           }
         } catch (error) {
           // Remove corrupted data
-          SecureStorage.setSensitiveData(key.replace('encrypted_', ''), '');
+          await SecureStorage.setSensitiveData(key.replace('encrypted_', ''), '');
           cleaned++;
         }
       }
-    });
+    }
     
     return cleaned;
   }
